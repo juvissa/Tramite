@@ -1,0 +1,129 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--fuente-principal);
+  background: var(--color-fondo-modulos);
+  color: var(--color-texto);
+}
+
+/* ==========================================
+   ENCABEZADO
+   ========================================== */
+.encabezado {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: var(--color-fondo);
+  border-bottom: 1px solid var(--borde-color);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--espaciado-xl);
+  z-index: 100;
+}
+
+/* IZQUIERDA — LOGO + TÍTULOS */
+.encabezado-izquierda {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-md);
+}
+
+.encabezado-logo {
+  height: 40px;
+  width: auto;
+}
+
+.encabezado-titulos {
+  display: flex;
+  flex-direction: column;
+}
+
+.encabezado-siglas {
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-semibold);
+  color: var(--color-texto);
+}
+
+.encabezado-subtitulo {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+/* CENTRO — PÁGINA ACTUAL + RUTA */
+.encabezado-centro {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaciado-md);
+}
+
+.encabezado-pagina {
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-bold);
+  color: var(--color-texto);
+}
+
+.encabezado-divisor {
+  width: 1px;
+  height: 20px;
+  background: var(--borde-color);
+}
+
+.encabezado-ruta {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+/* DERECHA — USUARIO + AVATAR + CERRAR SESIÓN */
+.encabezado-derecha {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-md);
+}
+
+.encabezado-usuario {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-secundario);
+}
+
+.encabezado-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--color-primario-inicio);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-bold);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.btn-cerrar-sesion {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: var(--borde-radio);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-error);
+  font-size: 1.25rem;
+  transition: background var(--transicion-rapida);
+  flex-shrink: 0;
+}
+
+.btn-cerrar-sesion:hover {
+  background: rgba(214, 40, 40, 0.1);
+}
