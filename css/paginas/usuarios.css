@@ -356,10 +356,6 @@
 .btn-reactivar:hover {
   background: rgba(0, 103, 79, 0.2);
 }
-  gap: 8px;
-}
-
-.btn-exito-md:hover { opacity: 0.9; }
 
 #modalEliminarUsuario .md-modal {
   width: auto;

@@ -22,7 +22,7 @@ function normalizarTexto(texto: string): string {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: CORS_HEADERS })
+    return new Response('ok', { headers: CORS_HEADERS })
   }
 
   try {

@@ -4,3 +4,9 @@ verify_jwt = false
 
 [functions.editar-usuario]
 verify_jwt = false
+
+[functions.generar-numero-documento]
+verify_jwt = false
+
+[functions.crear-documento]
+verify_jwt = false
