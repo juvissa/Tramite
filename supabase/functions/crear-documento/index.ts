@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -72,13 +72,13 @@ serve(async (req) => {
       )
     }
 
-    const anio = new Date(fecha + 'T12:00:00').getFullYear()
+    const año = new Date(fecha + 'T12:00:00').getFullYear()
 
     const { data: counter } = await adminClient
       .from('contadores_documentos')
       .select('id, ultimo_contador')
       .eq('tipo_documento', tipo_documento)
-      .eq('anio', anio)
+      .eq('año', año)
       .maybeSingle()
 
     let nuevoContador = 1
@@ -88,7 +88,7 @@ serve(async (req) => {
         .from('contadores_documentos')
         .insert({
           tipo_documento,
-          anio,
+          año,
           ultimo_contador: 1,
         })
 
@@ -116,7 +116,7 @@ serve(async (req) => {
       nuevoContador = updated.ultimo_contador
     }
 
-    const numeroDocumento = `${String(nuevoContador).padStart(3, '0')}-${anio}-${PREFIJO_US}-${PREFIJO_HSJCH}`
+    const numeroDocumento = `${String(nuevoContador).padStart(3, '0')}-${año}-${PREFIJO_US}-${PREFIJO_HSJCH}`
 
     const { data: doc, error: insertError } = await adminClient
       .from('documentos')

@@ -379,6 +379,32 @@
         }
       }
 
+      // ─── 5. Generar y subir Word ───
+      try {
+        const tipoObj = TIPOS_DOCUMENTO.find(t => t.id === tipoDocumento)
+        const wordInfo = await generarYSubirWord({
+          tipo_documento: tipoObj ? tipoObj.nombre : tipoDocumento,
+          numero_documento: data.numero_documento,
+          fecha,
+          destinatario,
+          cargo,
+          asunto,
+          cuerpo,
+        }, data.id, supabase)
+
+        await supabase.from('documentos_archivos').insert({
+          documento_id: data.id,
+          nombre_archivo: `${data.numero_documento}.docx`,
+          ruta_archivo: wordInfo.ruta,
+          url_archivo: wordInfo.url,
+          tipo_archivo: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          tamano_bytes: 0,
+          subido_por: perfilActual.id,
+        })
+      } catch (wordErr) {
+        console.warn('Error al generar Word:', wordErr.message)
+      }
+
       // ─── Éxito ───
       texto.textContent = '¡Guardado!'
       spinner.style.display = 'none'

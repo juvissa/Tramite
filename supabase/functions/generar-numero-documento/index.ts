@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -29,23 +29,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const anio = new Date().getFullYear()
+    const año = new Date().getFullYear()
 
     const { data: counter } = await adminClient
       .from('contadores_documentos')
       .select('ultimo_contador')
       .eq('tipo_documento', tipo_documento)
-      .eq('anio', anio)
+      .eq('año', año)
       .maybeSingle()
 
     const siguiente = counter ? counter.ultimo_contador + 1 : 1
 
-    const numeroDocumento = `${String(siguiente).padStart(3, '0')}-${anio}-${PREFIJO_US}-${PREFIJO_HSJCH}`
+    const numeroDocumento = `${String(siguiente).padStart(3, '0')}-${año}-${PREFIJO_US}-${PREFIJO_HSJCH}`
 
     return new Response(
       JSON.stringify({
         contador: siguiente,
-        anio,
+        año,
         numero_documento: numeroDocumento,
         ya_existe: !!counter,
       }),
