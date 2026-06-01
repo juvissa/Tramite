@@ -43,17 +43,25 @@ class DatePicker {
   }
 
   _crearEstructura(hoy) {
-    this.input.style.display = 'none'
-
-    this.wrapper = document.createElement('div')
-    this.wrapper.className = 'fecha-wrapper'
-
-    this.displayInput = document.createElement('input')
-    this.displayInput.type = 'text'
-    this.displayInput.className = 'fecha-input'
-    this.displayInput.placeholder = this.placeholder
-    this.displayInput.value = this.valorInicial
-    this.displayInput.autocomplete = 'off'
+    const parentWrapper = this.input.closest('.input-wrapper')
+    if (parentWrapper) {
+      this.wrapper = parentWrapper
+      this.displayInput = this.input
+      this._reutilizaWrapper = true
+    } else {
+      this.input.style.display = 'none'
+      this.wrapper = document.createElement('div')
+      this.wrapper.className = 'fecha-wrapper'
+      this.displayInput = document.createElement('input')
+      this.displayInput.type = 'text'
+      this.displayInput.className = 'fecha-input'
+      this.displayInput.placeholder = this.placeholder
+      this.displayInput.value = this.valorInicial
+      this.displayInput.autocomplete = 'off'
+      this.wrapper.appendChild(this.displayInput)
+      this.input.parentNode.insertBefore(this.wrapper, this.input)
+      this.input.dataset.fechaWrapper = true
+    }
 
     const icono = document.createElement('i')
     icono.className = 'ph ph-calendar-blank fecha-icono'
@@ -63,12 +71,8 @@ class DatePicker {
     this.calendario.className = 'fecha-calendario'
     this.calendario.id = `${this.input.id}-calendario`
 
-    this.wrapper.appendChild(this.displayInput)
     this.wrapper.appendChild(icono)
     this.wrapper.appendChild(this.calendario)
-
-    this.input.parentNode.insertBefore(this.wrapper, this.input)
-    this.input.dataset.fechaWrapper = true
 
     this.mesActual = hoy.month
     this.anoActual = hoy.year
@@ -249,7 +253,10 @@ class DatePicker {
   }
 
   destruir() {
-    if (this.wrapper && this.wrapper.parentNode) {
+    const icono = document.getElementById(`${this.input.id}-icono`)
+    if (icono) icono.remove()
+    if (this.calendario) this.calendario.remove()
+    if (!this._reutilizaWrapper && this.wrapper && this.wrapper.parentNode) {
       this.wrapper.parentNode.replaceChild(this.input, this.wrapper)
     }
   }

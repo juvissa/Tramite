@@ -58,17 +58,18 @@
             </div>
             <div class="campo-grupo">
               <label>Fecha</label>
-              <input type="hidden" id="campoFecha" />
+              <div class="input-wrapper">
+                <input type="text" id="campoFecha" placeholder="dd/mm/aaaa" />
+              </div>
             </div>
             <div class="campo-grupo">
               <label>Prioridad</label>
-              <div class="input-wrapper">
-                <select id="campoPrioridad">
-                  <option value="Baja">Baja</option>
-                  <option value="Media" selected>Media</option>
-                  <option value="Alta">Alta</option>
-                  <option value="Urgente">Urgente</option>
-                </select>
+              <div class="filtro-select-wrapper" id="wrapperPrioridad">
+                <button type="button" class="filtro-select-trigger" id="triggerPrioridad">
+                  <span class="filtro-select-text">Media</span>
+                  <i class="ph ph-caret-down filtro-select-arrow"></i>
+                </button>
+                <div class="filtro-dropdown" id="dropdownPrioridad"></div>
               </div>
             </div>
             <div class="campo-grupo">

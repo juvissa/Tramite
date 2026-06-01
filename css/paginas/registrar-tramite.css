@@ -157,10 +157,7 @@
   color: var(--color-texto);
 }
 
-.input-wrapper input[readonly] {
-  color: var(--color-texto-claro);
-  cursor: default;
-}
+
 
 .input-wrapper textarea {
   resize: vertical;

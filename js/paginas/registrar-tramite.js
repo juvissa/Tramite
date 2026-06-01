@@ -7,6 +7,7 @@
   let areas = []
   let adjuntosSeleccionados = []
   let datePicker = null
+  const cacheNumeros = {}
 
   const TIPOS_DOCUMENTO = [
     { id: 'CARTA', nombre: 'Carta Nº' },
@@ -44,6 +45,7 @@
 
     await Promise.all([
       cargarAreas(),
+      precargarNumeros(),
     ])
 
     const nombreCompleto = `${perfil.nombre_completo || ''} ${perfil.apellidos_completos || ''}`.trim()
@@ -53,6 +55,7 @@
     inicializarDatePicker()
     inicializarDesplegableTipoDoc()
     inicializarDesplegableArea()
+    inicializarDesplegablePrioridad()
     inicializarFileInput()
     inicializarBotones()
   }
@@ -115,9 +118,39 @@
     })
   }
 
+  async function precargarNumeros() {
+    const ids = TIPOS_DOCUMENTO.map(t => t.id)
+    const resultados = await Promise.allSettled(
+      ids.map(id =>
+        fetch(
+          `${CONFIGURACION.supabase.url}/functions/v1/generar-numero-documento`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${sesion.access_token}`,
+            },
+            body: JSON.stringify({ tipo_documento: id }),
+          }
+        ).then(r => r.json())
+          .then(d => ({ id, numero_documento: d.numero_documento }))
+      )
+    )
+    for (const r of resultados) {
+      if (r.status === 'fulfilled' && r.value.numero_documento) {
+        cacheNumeros[r.value.id] = r.value.numero_documento
+      }
+    }
+  }
+
   async function generarNumeroDocumento(tipoDocumento) {
     const campo = document.getElementById('campoNumero')
-    campo.value = 'Generando...'
+
+    if (cacheNumeros[tipoDocumento]) {
+      campo.value = cacheNumeros[tipoDocumento]
+    } else {
+      campo.value = 'Generando...'
+    }
 
     try {
       const res = await fetch(
@@ -139,8 +172,11 @@
       }
 
       campo.value = data.numero_documento
+      cacheNumeros[tipoDocumento] = data.numero_documento
     } catch (err) {
-      campo.value = 'Error al generar'
+      if (!cacheNumeros[tipoDocumento]) {
+        campo.value = 'Error al generar'
+      }
     }
   }
 
@@ -176,6 +212,54 @@
         document.getElementById('campoDestinatario').value = area.responsable || ''
         document.getElementById('campoCargo').value = area.cargo || ''
       }
+    })
+
+    trigger.addEventListener('click', () => {
+      wrapper.classList.toggle('abierto')
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.classList.remove('abierto')
+      }
+    })
+  }
+
+  /* ─── DESPLEGABLE PRIORIDAD ─── */
+  function inicializarDesplegablePrioridad() {
+    const PRIORIDADES = [
+      { id: 'Baja', nombre: 'Baja' },
+      { id: 'Media', nombre: 'Media' },
+      { id: 'Alta', nombre: 'Alta' },
+      { id: 'Urgente', nombre: 'Urgente' },
+    ]
+
+    const dropdown = document.getElementById('dropdownPrioridad')
+    dropdown.innerHTML = ''
+
+    PRIORIDADES.forEach((p) => {
+      const opt = document.createElement('div')
+      opt.className = 'filtro-option'
+      opt.dataset.value = p.id
+      opt.textContent = p.nombre
+      if (p.id === 'Media') opt.classList.add('seleccionada')
+      dropdown.appendChild(opt)
+    })
+
+    const trigger = document.getElementById('triggerPrioridad')
+    const text = trigger.querySelector('.filtro-select-text')
+    trigger.dataset.value = 'Media'
+    const wrapper = document.getElementById('wrapperPrioridad')
+
+    dropdown.addEventListener('click', (e) => {
+      const opt = e.target.closest('.filtro-option')
+      if (!opt) return
+
+      dropdown.querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+      opt.classList.add('seleccionada')
+      text.textContent = opt.textContent
+      trigger.dataset.value = opt.dataset.value
+      wrapper.classList.remove('abierto')
     })
 
     trigger.addEventListener('click', () => {
@@ -252,6 +336,13 @@
     delete triggerArea.dataset.value
     document.getElementById('dropdownArea').querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
 
+    const triggerPri = document.getElementById('triggerPrioridad')
+    triggerPri.querySelector('.filtro-select-text').textContent = 'Media'
+    triggerPri.dataset.value = 'Media'
+    document.getElementById('dropdownPrioridad').querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+    const optPriMedia = document.querySelector('#dropdownPrioridad .filtro-option[data-value="Media"]')
+    if (optPriMedia) optPriMedia.classList.add('seleccionada')
+
     document.getElementById('campoDestinatario').value = ''
     document.getElementById('campoCargo').value = ''
 
@@ -279,7 +370,7 @@
     const tipoDocumento = document.getElementById('triggerTipoDoc').dataset.value
     const asunto = document.getElementById('campoAsunto').value.trim()
     const cuerpo = document.getElementById('campoCuerpo').value.trim()
-    const prioridad = document.getElementById('campoPrioridad').value
+    const prioridad = document.getElementById('triggerPrioridad').dataset.value
     const fecha = datePicker ? datePicker.obtenerValor() : new Date().toISOString().split('T')[0]
     const destinatario = document.getElementById('campoDestinatario').value.trim()
     const cargo = document.getElementById('campoCargo').value.trim()
