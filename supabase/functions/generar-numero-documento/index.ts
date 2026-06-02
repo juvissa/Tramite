@@ -31,6 +31,18 @@ serve(async (req) => {
 
     const año = new Date().getFullYear()
 
+    // 1. Obtener máximo actual de los documentos
+    const { data: maxDoc } = await adminClient
+      .from('documentos')
+      .select('contador')
+      .eq('tipo_documento', tipo_documento)
+      .order('contador', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const contadorMinimo = maxDoc ? maxDoc.contador : 0
+
+    // 2. Obtener el contador de contadores_documentos
     const { data: counter } = await adminClient
       .from('contadores_documentos')
       .select('ultimo_contador')
@@ -38,7 +50,9 @@ serve(async (req) => {
       .eq('año', año)
       .maybeSingle()
 
-    const siguiente = counter ? counter.ultimo_contador + 1 : 1
+    const ultimoContador = counter ? counter.ultimo_contador : 0
+
+    const siguiente = Math.max(ultimoContador + 1, contadorMinimo + 1)
 
     const numeroDocumento = `${String(siguiente).padStart(3, '0')}-${año}-${PREFIJO_US}-${PREFIJO_HSJCH}`
 
@@ -47,7 +61,7 @@ serve(async (req) => {
         contador: siguiente,
         año,
         numero_documento: numeroDocumento,
-        ya_existe: !!counter,
+        ya_existe: ultimoContador > 0,
       }),
       { status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
     )

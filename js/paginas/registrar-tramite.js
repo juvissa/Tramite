@@ -34,7 +34,7 @@
 
     const { data: perfil, error: errorPerfil } = await supabase
       .from('perfiles')
-      .select('id, nombre_completo, apellidos_completos, nombre_usuario, gmail, rol')
+      .select('id, nombre_completo, apellidos_completos, nombre_usuario, gmail, rol, firma_url')
       .eq('id', session.user.id)
       .single()
 
@@ -389,9 +389,41 @@
     texto.textContent = 'Guardando...'
 
     let archivosSubidos = []
+    let wordBlob = null
 
     try {
-      // ─── 1. Subir archivos a temp/ (primero, antes de crear el documento) ───
+      // ─── 1. Obtener número predicho para el Word ───
+      let numeroPredicho = cacheNumeros[tipoDocumento]
+      if (!numeroPredicho) {
+        const predResp = await fetch(
+          `${CONFIGURACION.supabase.url}/functions/v1/generar-numero-documento`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${sesion.access_token}`,
+            },
+            body: JSON.stringify({ tipo_documento: tipoDocumento }),
+          }
+        )
+        const predData = await predResp.json()
+        numeroPredicho = predData.numero_documento
+      }
+
+      // ─── 2. Generar Word en memoria (antes que nada) ───
+      const tipoObj = TIPOS_DOCUMENTO.find(t => t.id === tipoDocumento)
+      wordBlob = await generarWordBlob({
+        tipo_documento: tipoObj ? tipoObj.nombre : tipoDocumento,
+        numero_documento: numeroPredicho,
+        fecha,
+        destinatario,
+        cargo,
+        asunto,
+        cuerpo,
+        firma_url: perfilActual.firma_url,
+      })
+
+      // ─── 3. Subir archivos a temp/ ───
       if (adjuntosSeleccionados.length > 0) {
         const resultado = await subirArchivosTemp()
         if (!resultado.exito) {
@@ -400,7 +432,7 @@
         archivosSubidos = resultado.archivos
       }
 
-      // ─── 2. Crear documento (Edge Function atómica) ───
+      // ─── 4. Crear documento (Edge Function atómica) ───
       const res = await fetch(
         `${CONFIGURACION.supabase.url}/functions/v1/crear-documento`,
         {
@@ -428,10 +460,48 @@
       const data = await res.json()
 
       if (!res.ok) {
+        console.error('[crear-documento] Error:', data)
         throw new Error(data.error || 'Error al guardar el trámite')
       }
 
-      // ─── 3. Mover archivos de temp/ a emitidos/{nombre_usuario}/{numero_doc}/ ───
+      // Re-generar Word si el número real difiere del predicho
+      if (data.numero_documento !== numeroPredicho) {
+        wordBlob = await generarWordBlob({
+          tipo_documento: tipoObj ? tipoObj.nombre : tipoDocumento,
+          numero_documento: data.numero_documento,
+          fecha,
+          destinatario,
+          cargo,
+          asunto,
+          cuerpo,
+          firma_url: perfilActual.firma_url,
+        })
+      }
+
+      // ─── 5. Subir Word a Storage ───
+      // Se incluye el tipo de documento en el nombre del archivo para evitar 
+      // colisiones, ya que Oficios y Memorándums pueden compartir el mismo número.
+      const tipoParaRuta = tipoObj ? tipoObj.id : tipoDocumento;
+      const nombreWord = `emitidos/${nombreCarpeta}/${tipoParaRuta}_${data.numero_documento}.docx`
+      
+      const { error: wordUploadError } = await supabase.storage
+        .from('documentos')
+        .upload(nombreWord, wordBlob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        })
+
+      if (wordUploadError) {
+        await supabase.from('documentos').delete().eq('id', data.id)
+        throw new Error('Error al subir el Word: ' + wordUploadError.message)
+      }
+
+      const { data: { publicUrl: wordUrl } } = supabase.storage
+        .from('documentos')
+        .getPublicUrl(nombreWord)
+
+      // ─── 6. Mover archivos de temp/ a emitidos/{nombre_usuario}/{numero_doc}/ ───
       for (const archivo of archivosSubidos) {
         const nombre = archivo.ruta.split('/').pop()
         const destinoRuta = `emitidos/${nombreCarpeta}/${data.numero_documento}/${nombre}`
@@ -449,50 +519,28 @@
         }
       }
 
-      // ─── 4. Insertar registros en documentos_archivos ───
+      // ─── 7. Insertar registros en documentos_archivos (adjuntos + Word) ───
       for (const archivo of archivosSubidos) {
-        const { error: insertError } = await supabase
-          .from('documentos_archivos')
-          .insert({
-            documento_id: data.id,
-            nombre_archivo: archivo.nombre_original,
-            ruta_archivo: archivo.ruta,
-            url_archivo: archivo.url,
-            tipo_archivo: archivo.tipo,
-            tamano_bytes: archivo.tamano,
-            subido_por: perfilActual.id,
-          })
-
-        if (insertError) {
-          console.warn('Error al registrar archivo en BD:', insertError)
-        }
-      }
-
-      // ─── 5. Generar y subir Word ───
-      try {
-        const tipoObj = TIPOS_DOCUMENTO.find(t => t.id === tipoDocumento)
-        const wordInfo = await generarYSubirWord({
-          tipo_documento: tipoObj ? tipoObj.nombre : tipoDocumento,
-          numero_documento: data.numero_documento,
-          fecha,
-          destinatario,
-          cargo,
-          asunto,
-          cuerpo,
-        }, nombreCarpeta, supabase)
-
         await supabase.from('documentos_archivos').insert({
           documento_id: data.id,
-          nombre_archivo: `${data.numero_documento}.docx`,
-          ruta_archivo: wordInfo.ruta,
-          url_archivo: wordInfo.url,
-          tipo_archivo: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          tamano_bytes: 0,
+          nombre_archivo: archivo.nombre_original,
+          ruta_archivo: archivo.ruta,
+          url_archivo: archivo.url,
+          tipo_archivo: archivo.tipo,
+          tamano_bytes: archivo.tamano,
           subido_por: perfilActual.id,
-        })
-      } catch (wordErr) {
-        console.warn('Error al generar Word:', wordErr.message)
+        }).then(r => { if (r.error) console.warn('Error al registrar archivo en BD:', r.error) })
       }
+
+      await supabase.from('documentos_archivos').insert({
+        documento_id: data.id,
+        nombre_archivo: `Documento - ${tipoParaRuta} - ${data.numero_documento}.docx`,
+        ruta_archivo: nombreWord,
+        url_archivo: wordUrl,
+        tipo_archivo: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        tamano_bytes: 0,
+        subido_por: perfilActual.id,
+      })
 
       // ─── Éxito ───
       delete cacheNumeros[tipoDocumento]

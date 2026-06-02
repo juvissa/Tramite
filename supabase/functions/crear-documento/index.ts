@@ -7,9 +7,6 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 }
 
-const PREFIJO_US = 'US'
-const PREFIJO_HSJCH = 'HSJCH'
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS })
@@ -72,82 +69,38 @@ serve(async (req) => {
       )
     }
 
-    const año = new Date(fecha + 'T12:00:00').getFullYear()
+    // Llamada a la función RPC atómica
+    const { data, error: rpcError } = await adminClient.rpc('crear_documento_atomico', {
+      p_tipo: tipo,
+      p_tipo_documento: tipo_documento,
+      p_fecha: fecha,
+      p_prioridad: prioridad,
+      p_autor_id: autor_id,
+      p_remitente_id: remitente_id,
+      p_area_id: area_id || null,
+      p_destinatario: destinatario || null,
+      p_cargo_destinatario: cargo_destinatario || null,
+      p_asunto: asunto,
+      p_cuerpo_documento: cuerpo_documento,
+      p_creado_por: user.id
+    })
 
-    const { data: counter } = await adminClient
-      .from('contadores_documentos')
-      .select('id, ultimo_contador')
-      .eq('tipo_documento', tipo_documento)
-      .eq('año', año)
-      .maybeSingle()
-
-    let nuevoContador = 1
-
-    if (!counter) {
-      const { error: insertError } = await adminClient
-        .from('contadores_documentos')
-        .insert({
-          tipo_documento,
-          año,
-          ultimo_contador: 1,
-        })
-
-      if (insertError) {
-        return new Response(
-          JSON.stringify({ error: 'Error al crear el contador' }),
-          { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+    if (rpcError) {
+      // Manejar el caso de que ya exista un número repetido (llave duplicada)
+      if (rpcError.code === '23505') {
+         return new Response(
+          JSON.stringify({ error: 'El número de documento generado ya existe. Por favor intenta de nuevo.' }),
+          { status: 409, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
         )
       }
-    } else {
-      const { data: updated, error: updateError } = await adminClient
-        .from('contadores_documentos')
-        .update({ ultimo_contador: counter.ultimo_contador + 1 })
-        .eq('id', counter.id)
-        .select('ultimo_contador')
-        .single()
-
-      if (updateError || !updated) {
-        return new Response(
-          JSON.stringify({ error: 'Error al actualizar el contador' }),
-          { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      nuevoContador = updated.ultimo_contador
-    }
-
-    const numeroDocumento = `${String(nuevoContador).padStart(3, '0')}-${año}-${PREFIJO_US}-${PREFIJO_HSJCH}`
-
-    const { data: doc, error: insertError } = await adminClient
-      .from('documentos')
-      .insert({
-        tipo,
-        tipo_documento,
-        numero_documento: numeroDocumento,
-        contador: nuevoContador,
-        fecha,
-        prioridad,
-        autor_id,
-        remitente_id,
-        area_id: area_id || null,
-        destinatario: destinatario || null,
-        cargo_destinatario: cargo_destinatario || null,
-        asunto,
-        cuerpo_documento,
-        creado_por: user.id,
-      })
-      .select('id')
-      .single()
-
-    if (insertError) {
       return new Response(
-        JSON.stringify({ error: 'Error al crear el documento' }),
+        JSON.stringify({ error: 'Error al crear el documento: ' + rpcError.message }),
         { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       )
     }
 
     return new Response(
-      JSON.stringify({ success: true, id: doc.id, numero_documento: numeroDocumento }),
+      JSON.stringify({ success: true, id: data.id, numero_documento: data.numero_documento }),
       { status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
     )
 
