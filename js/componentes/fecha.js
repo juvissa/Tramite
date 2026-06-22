@@ -252,6 +252,11 @@ class DatePicker {
     }
   }
 
+  limpiar() {
+    this.fechaISO = ''
+    this.displayInput.value = ''
+  }
+
   destruir() {
     const icono = document.getElementById(`${this.input.id}-icono`)
     if (icono) icono.remove()

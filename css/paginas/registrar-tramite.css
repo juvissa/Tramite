@@ -352,3 +352,23 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ─── Campo full-width (ocupa ambas columnas) ─── */
+.seccion-campos .campo-grupo.campo-full {
+  grid-column: 1 / -1;
+}
+
+/* ─── Responsive: tablets (≤1024px) ─── */
+@media (max-width: 1024px) {
+  .seccion-campos {
+    gap: 14px;
+  }
+}
+
+/* ─── Responsive: móviles (≤768px) ─── */
+@media (max-width: 768px) {
+  .seccion-campos {
+    grid-template-columns: 1fr;
+    padding-left: 0;
+  }
+}

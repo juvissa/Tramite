@@ -102,3 +102,54 @@
 .sidebar-item.activo .title {
   color: var(--color-primario-inicio);
 }
+
+/* ==========================================
+   OVERLAY — SIDEBAR BACKGROUND (móvil)
+   ========================================== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--color-overlay);
+  backdrop-filter: var(--blur-overlay);
+  -webkit-backdrop-filter: var(--blur-overlay);
+  z-index: 89;
+}
+
+.sidebar-overlay.visible {
+  display: block;
+}
+
+/* ==========================================
+   RESPONSIVE — SIDEBAR OVERLAY (<1024px)
+   ========================================== */
+@media (max-width: 1024px) {
+  .sidebar {
+    left: 0;
+    top: 64px;
+    width: 260px;
+    border-radius: 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    height: calc(100vh - 64px);
+    padding-top: var(--espaciado-md);
+    align-items: stretch;
+  }
+
+  .sidebar:hover {
+    width: 260px;
+  }
+
+  .sidebar.visible {
+    transform: translateX(0);
+  }
+
+  .sidebar .title {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar-item {
+    padding: 8px 20px 8px 16px;
+  }
+}

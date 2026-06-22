@@ -26,8 +26,41 @@ document.addEventListener('header:listo', async () => {
     });
   }
 
+  // ─── SIDEBAR TOGGLE (responsive overlay) ───
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const btnToggle = document.getElementById('btnSidebarToggle');
+
+  function cerrarSidebar() {
+    sidebar.classList.remove('visible');
+    overlay.classList.remove('visible');
+  }
+
+  function abrirSidebar() {
+    sidebar.classList.add('visible');
+    overlay.classList.add('visible');
+  }
+
+  if (btnToggle) {
+    btnToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (sidebar.classList.contains('visible')) {
+        cerrarSidebar();
+      } else {
+        abrirSidebar();
+      }
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', cerrarSidebar);
+  }
+
   document.querySelectorAll('.sidebar-item').forEach(item => {
     item.addEventListener('click', () => {
+      if (window.innerWidth <= 1024) {
+        cerrarSidebar();
+      }
       const modulo = item.dataset.modulo;
       if (modulo && modulo !== moduloActivo) {
         window.location.href = `${modulo}.html`;

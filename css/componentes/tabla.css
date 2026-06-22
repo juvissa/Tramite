@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--espaciado-lg) var(--espaciado-xl);
+  padding: 12px var(--espaciado-xl);
   border-bottom: 1px solid var(--borde-color);
 }
 
@@ -84,8 +84,39 @@
 .tabla-header-filtros {
   display: flex;
   align-items: center;
-  gap: var(--espaciado-md);
+  gap: 10px;
   width: 100%;
+  flex-wrap: wrap;
+}
+
+.tabla-header-filtros .filtro-search {
+  max-width: 220px;
+}
+
+.tabla-header-filtros .filtro-search i {
+  left: 10px;
+  font-size: 1rem;
+}
+
+.tabla-header-filtros .filtro-input {
+  padding: 6px 12px 6px 34px;
+  font-size: 0.8125rem;
+}
+
+.tabla-header-filtros .filtro-select-trigger {
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  min-width: 130px;
+}
+
+.tabla-header-filtros .filtro-option {
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+}
+
+.tabla-header-filtros .btn-filled-md {
+  padding: 6px 16px;
+  font-size: 0.8125rem;
 }
 
 .filtro-search {
@@ -238,11 +269,128 @@
 }
 
 /* ==========================================
-   FOOTER DE TABLA
+   FOOTER DE TABLA — PAGINACIÓN
    ========================================== */
 .tabla-footer {
   display: flex;
-  justify-content: flex-end;
-  padding: var(--espaciado-md) var(--espaciado-xl);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--espaciado-sm) var(--espaciado-xl);
   border-top: 1px solid var(--borde-color);
+}
+
+.paginacion-izquierda {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+}
+
+.paginacion-select {
+  padding: 4px 24px 4px 8px;
+  border: 1.5px solid var(--borde-color);
+  border-radius: var(--borde-radio);
+  font-size: var(--texto-xs);
+  font-family: var(--fuente-principal);
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2394a3b8' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  transition: border-color var(--transicion-rapida);
+}
+
+.paginacion-select:hover {
+  border-color: var(--color-texto-claro);
+}
+
+.paginacion-select:focus {
+  border-color: var(--color-primario-inicio);
+  box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.12);
+}
+
+.paginacion-centro {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.paginacion-controles {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.paginacion-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--borde-radio);
+  background: transparent;
+  color: var(--color-texto-secundario);
+  font-size: var(--texto-xs);
+  font-family: var(--fuente-principal);
+  font-weight: var(--peso-medium);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all var(--transicion-rapida);
+  user-select: none;
+}
+
+.paginacion-btn:hover:not(.activo):not(:disabled) {
+  background: var(--color-fondo-modulos);
+  color: var(--color-texto);
+  border-color: var(--borde-color);
+}
+
+.paginacion-btn.activo {
+  background: var(--color-primario-inicio);
+  color: #fff;
+  font-weight: var(--peso-semibold);
+  cursor: default;
+}
+
+.paginacion-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paginacion-nav {
+  gap: 4px;
+  padding: 0 10px;
+  font-size: var(--texto-xs);
+}
+
+.paginacion-elipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 32px;
+  font-size: var(--texto-xs);
+  color: var(--color-texto-claro);
+  user-select: none;
+}
+
+.paginacion-derecha {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.paginacion-info {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-secundario);
+  white-space: nowrap;
 }

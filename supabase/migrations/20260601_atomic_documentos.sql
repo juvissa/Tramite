@@ -42,7 +42,7 @@ BEGIN
   RETURNING ultimo_contador INTO v_contador;
 
   -- Construir la cadena numero_documento
-  v_numero_documento := lpad(v_contador::text, 3, '0') || '-' || v_anio::text || '-US-HSJCH';
+  v_numero_documento := lpad(v_contador::text, 3, '0') || '-' || v_anio::text || '-US';
 
   -- Insertar el documento (si la combinación tipo_documento + numero_documento ya existe, fallará aquí 
   -- y revertirá TODO, incluyendo el avance del contador)

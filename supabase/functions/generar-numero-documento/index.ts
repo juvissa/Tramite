@@ -8,7 +8,6 @@ const CORS_HEADERS = {
 }
 
 const PREFIJO_US = 'US'
-const PREFIJO_HSJCH = 'HSJCH'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -54,7 +53,7 @@ serve(async (req) => {
 
     const siguiente = Math.max(ultimoContador + 1, contadorMinimo + 1)
 
-    const numeroDocumento = `${String(siguiente).padStart(3, '0')}-${año}-${PREFIJO_US}-${PREFIJO_HSJCH}`
+    const numeroDocumento = `${String(siguiente).padStart(3, '0')}-${año}-${PREFIJO_US}`
 
     return new Response(
       JSON.stringify({

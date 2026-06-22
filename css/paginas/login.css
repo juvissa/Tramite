@@ -668,3 +668,32 @@ body {
   cursor: pointer;
   user-select: none;
 }
+
+/* ==========================================
+   RESPONSIVE — LOGIN
+   ========================================== */
+@media (max-width: 768px) {
+  .login-seccion-visual {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-logo {
+    max-width: 120px;
+  }
+
+  .login-titulo {
+    font-size: var(--texto-xl);
+  }
+
+  .otp-casilla {
+    width: 32px;
+    height: 44px;
+    font-size: 1.25rem;
+  }
+
+  .otp-contenedor {
+    gap: 4px;
+  }
+}

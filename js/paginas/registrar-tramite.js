@@ -8,6 +8,7 @@
   let areas = []
   let adjuntosSeleccionados = []
   let datePicker = null
+  let datePickerDerivar = null
   const cacheNumeros = {}
 
   const TIPOS_DOCUMENTO = [
@@ -60,6 +61,8 @@
     const nombreCompleto = `${perfil.nombre_completo || ''} ${perfil.apellidos_completos || ''}`.trim()
     document.getElementById('campoAutor').value = nombreCompleto
     document.getElementById('campoRemitente').value = nombreCompleto
+
+    inicializarDerivar()
   }
 
   async function cargarAreas() {
@@ -312,11 +315,22 @@
 
   /* ─── BOTONES ─── */
   function inicializarBotones() {
+    document.getElementById('btnEmitir').addEventListener('click', () => mostrarCard('emitido'))
+    document.getElementById('btnDerivar').addEventListener('click', () => mostrarCard('derivado'))
+
     document.getElementById('btnCancelarTramite').addEventListener('click', () => {
       limpiarFormulario()
     })
 
     document.getElementById('btnGuardarTramite').addEventListener('click', guardarTramite)
+  }
+
+  function mostrarCard(tipo) {
+    const esEmitir = tipo === 'emitido'
+    document.getElementById('btnEmitir').classList.toggle('activo', esEmitir)
+    document.getElementById('btnDerivar').classList.toggle('activo', !esEmitir)
+    document.getElementById('cardEmitir').style.display = esEmitir ? '' : 'none'
+    document.getElementById('cardDerivar').style.display = esEmitir ? 'none' : ''
   }
 
   function limpiarFormulario() {
@@ -617,5 +631,309 @@
   function sanitizarNombre(nombre) {
     const sinAcentos = nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     return sinAcentos.replace(/[^a-zA-Z0-9._-]/g, '_')
+  }
+
+  /* ════════════════════════════════════════════
+     DERIVAR
+     ════════════════════════════════════════════ */
+  function inicializarDerivar() {
+    inicializarDesplegableTipoDocDerivar()
+    inicializarDatePickerDerivar()
+    inicializarDesplegablePrioridadDerivar()
+    inicializarDesplegableAreaDestino()
+    inicializarDesplegableEstadoDerivar()
+    inicializarBotonesDerivar()
+
+    document.getElementById('campoRemitenteDerivar').value =
+      `${perfilActual.nombre_completo || ''} ${perfilActual.apellidos_completos || ''}`.trim()
+  }
+
+  /* ─── DESPLEGABLE TIPO DOCUMENTO — DERIVAR ─── */
+  function inicializarDesplegableTipoDocDerivar() {
+    const dropdown = document.getElementById('dropdownTipoDocDeriv')
+    dropdown.innerHTML = ''
+
+    TIPOS_DOCUMENTO.forEach((td) => {
+      const opt = document.createElement('div')
+      opt.className = 'filtro-option'
+      opt.dataset.value = td.id
+      opt.textContent = td.nombre
+      dropdown.appendChild(opt)
+    })
+
+    const trigger = document.getElementById('triggerTipoDocDeriv')
+    const text = trigger.querySelector('.filtro-select-text')
+    const wrapper = document.getElementById('wrapperTipoDocDeriv')
+
+    dropdown.addEventListener('click', (e) => {
+      const opt = e.target.closest('.filtro-option')
+      if (!opt) return
+
+      dropdown.querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+      opt.classList.add('seleccionada')
+      text.textContent = opt.textContent
+      trigger.dataset.value = opt.dataset.value
+      wrapper.classList.remove('abierto')
+    })
+
+    trigger.addEventListener('click', () => {
+      wrapper.classList.toggle('abierto')
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.classList.remove('abierto')
+      }
+    })
+  }
+
+  /* ─── DATEPICKER — DERIVAR ─── */
+  function inicializarDatePickerDerivar() {
+    datePickerDerivar = new DatePicker('campoFechaDerivar', {
+      placeholder: 'dd/mm/aaaa',
+      timezone: CONFIGURACION.formato.zonaHoraria,
+    })
+  }
+
+  /* ─── DESPLEGABLE PRIORIDAD — DERIVAR ─── */
+  function inicializarDesplegablePrioridadDerivar() {
+    const PRIORIDADES = [
+      { id: 'Baja', nombre: 'Baja' },
+      { id: 'Media', nombre: 'Media' },
+      { id: 'Alta', nombre: 'Alta' },
+      { id: 'Urgente', nombre: 'Urgente' },
+    ]
+
+    const dropdown = document.getElementById('dropdownPrioridadDeriv')
+    dropdown.innerHTML = ''
+
+    PRIORIDADES.forEach((p) => {
+      const opt = document.createElement('div')
+      opt.className = 'filtro-option'
+      opt.dataset.value = p.id
+      opt.textContent = p.nombre
+      dropdown.appendChild(opt)
+    })
+
+    const trigger = document.getElementById('triggerPrioridadDeriv')
+    const text = trigger.querySelector('.filtro-select-text')
+    const wrapper = document.getElementById('wrapperPrioridadDeriv')
+
+    dropdown.addEventListener('click', (e) => {
+      const opt = e.target.closest('.filtro-option')
+      if (!opt) return
+
+      dropdown.querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+      opt.classList.add('seleccionada')
+      text.textContent = opt.textContent
+      trigger.dataset.value = opt.dataset.value
+      wrapper.classList.remove('abierto')
+    })
+
+    trigger.addEventListener('click', () => {
+      wrapper.classList.toggle('abierto')
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.classList.remove('abierto')
+      }
+    })
+  }
+
+  /* ─── DESPLEGABLE ÁREA DESTINO ─── */
+  function inicializarDesplegableAreaDestino() {
+    const dropdown = document.getElementById('dropdownAreaDestino')
+    dropdown.innerHTML = ''
+
+    areas.forEach((area) => {
+      const opt = document.createElement('div')
+      opt.className = 'filtro-option'
+      opt.dataset.value = area.id
+      opt.textContent = area.nombre
+      dropdown.appendChild(opt)
+    })
+
+    const trigger = document.getElementById('triggerAreaDestino')
+    const text = trigger.querySelector('.filtro-select-text')
+    const wrapper = document.getElementById('wrapperAreaDestino')
+
+    dropdown.addEventListener('click', (e) => {
+      const opt = e.target.closest('.filtro-option')
+      if (!opt) return
+
+      dropdown.querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+      opt.classList.add('seleccionada')
+      text.textContent = opt.textContent
+      trigger.dataset.value = opt.dataset.value
+      wrapper.classList.remove('abierto')
+
+      const area = areas.find((a) => a.id === opt.dataset.value)
+      if (area) {
+        document.getElementById('campoResponsableDerivar').value = area.responsable || ''
+        document.getElementById('campoCargoDerivar').value = area.cargo || ''
+      }
+
+      document.getElementById('errorAreaDestino').textContent = ''
+    })
+
+    trigger.addEventListener('click', () => {
+      wrapper.classList.toggle('abierto')
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.classList.remove('abierto')
+      }
+    })
+  }
+
+  /* ─── DESPLEGABLE ESTADO DERIVACIÓN ─── */
+  function inicializarDesplegableEstadoDerivar() {
+    const dropdown = document.getElementById('dropdownEstadoDeriv')
+    const trigger = document.getElementById('triggerEstadoDeriv')
+    const text = trigger.querySelector('.filtro-select-text')
+    const wrapper = document.getElementById('wrapperEstadoDeriv')
+
+    dropdown.addEventListener('click', (e) => {
+      const opt = e.target.closest('.filtro-option')
+      if (!opt) return
+
+      dropdown.querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+      opt.classList.add('seleccionada')
+      text.textContent = opt.textContent
+      trigger.dataset.value = opt.dataset.value
+      wrapper.classList.remove('abierto')
+
+      document.getElementById('errorEstadoDerivar').textContent = ''
+    })
+
+    trigger.addEventListener('click', () => {
+      wrapper.classList.toggle('abierto')
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.classList.remove('abierto')
+      }
+    })
+  }
+
+  /* ─── BOTONES — DERIVAR ─── */
+  function inicializarBotonesDerivar() {
+    document.getElementById('btnCancelarDerivar').addEventListener('click', limpiarFormularioDerivar)
+    document.getElementById('btnGuardarDerivar').addEventListener('click', guardarDerivacion)
+  }
+
+  function limpiarFormularioDerivar() {
+    document.getElementById('campoNumeroDerivar').value = ''
+    document.getElementById('campoRemitenteDerivar').value =
+      `${perfilActual.nombre_completo || ''} ${perfilActual.apellidos_completos || ''}`.trim()
+    document.getElementById('campoAsuntoDerivar').value = ''
+    document.getElementById('campoResponsableDerivar').value = ''
+    document.getElementById('campoCargoDerivar').value = ''
+    document.getElementById('campoObservacionesDerivar').value = ''
+
+    const triggerTipo = document.getElementById('triggerTipoDocDeriv')
+    triggerTipo.querySelector('.filtro-select-text').textContent = 'Seleccione un tipo'
+    delete triggerTipo.dataset.value
+    document.getElementById('dropdownTipoDocDeriv').querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+
+    const triggerPri = document.getElementById('triggerPrioridadDeriv')
+    triggerPri.querySelector('.filtro-select-text').textContent = 'Seleccione una prioridad'
+    delete triggerPri.dataset.value
+    document.getElementById('dropdownPrioridadDeriv').querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+
+    const triggerArea = document.getElementById('triggerAreaDestino')
+    triggerArea.querySelector('.filtro-select-text').textContent = 'Seleccione el área'
+    delete triggerArea.dataset.value
+    document.getElementById('dropdownAreaDestino').querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+
+    const triggerEst = document.getElementById('triggerEstadoDeriv')
+    triggerEst.querySelector('.filtro-select-text').textContent = 'Seleccione un estado'
+    delete triggerEst.dataset.value
+    document.getElementById('dropdownEstadoDeriv').querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+
+    document.querySelectorAll('#cardDerivar .input-error').forEach((el) => el.textContent = '')
+  }
+
+  async function guardarDerivacion() {
+    document.querySelectorAll('#cardDerivar .input-error').forEach((el) => el.textContent = '')
+
+    const tipoDocumento = document.getElementById('triggerTipoDocDeriv').dataset.value
+    const numeroDocumento = document.getElementById('campoNumeroDerivar').value.trim()
+    const prioridad = document.getElementById('triggerPrioridadDeriv').dataset.value
+    const fecha = datePickerDerivar ? datePickerDerivar.obtenerValor() : new Date().toISOString().split('T')[0]
+    const remitente = document.getElementById('campoRemitenteDerivar').value.trim()
+    const asunto = document.getElementById('campoAsuntoDerivar').value.trim()
+    const areaDestinoId = document.getElementById('triggerAreaDestino').dataset.value
+    const responsable = document.getElementById('campoResponsableDerivar').value.trim()
+    const cargo = document.getElementById('campoCargoDerivar').value.trim()
+    const estado = document.getElementById('triggerEstadoDeriv').dataset.value
+    const observaciones = document.getElementById('campoObservacionesDerivar').value.trim()
+
+    const areaDestino = areaDestinoId
+      ? (areas.find(a => a.id === areaDestinoId)?.nombre || '')
+      : ''
+
+    let valido = true
+    if (!tipoDocumento) { mostrarError('errorAsuntoDerivar', 'Seleccione un tipo de documento'); valido = false }
+    if (!numeroDocumento) { mostrarError('errorAsuntoDerivar', 'El número de documento es obligatorio'); valido = false }
+    if (!asunto) { mostrarError('errorAsuntoDerivar', 'El asunto es obligatorio'); valido = false }
+    if (!areaDestino) { mostrarError('errorAreaDestino', 'Seleccione un área destino'); valido = false }
+    if (!estado) { mostrarError('errorEstadoDerivar', 'Seleccione un estado'); valido = false }
+
+    if (!valido) return
+
+    const btn = document.getElementById('btnGuardarDerivar')
+    const spinner = document.getElementById('spinnerDerivar')
+    const texto = document.getElementById('textoGuardarDerivar')
+    btn.disabled = true
+    spinner.style.display = 'inline-block'
+    texto.textContent = 'Guardando...'
+
+    try {
+      const { error } = await supabase
+        .from('documentos')
+        .insert({
+          tipo: 'derivado',
+          tipo_documento: tipoDocumento,
+          numero_documento: numeroDocumento,
+          contador: 0,
+          fecha,
+          prioridad,
+          autor_id: perfilActual.id,
+          remitente_id: perfilActual.id,
+          area_id: null,
+          destinatario: responsable || null,
+          cargo_destinatario: cargo || null,
+          asunto,
+          cuerpo_documento: observaciones || asunto,
+          estado_actual: estado,
+          area_destino: areaDestino || null,
+          observaciones_derivacion: observaciones || null,
+          creado_por: perfilActual.id,
+        })
+
+      if (error) {
+        console.error('[derivar] Error:', error)
+        throw new Error(error.message || 'Error al guardar la derivación')
+      }
+
+      texto.textContent = '¡Guardado!'
+      spinner.style.display = 'none'
+
+      setTimeout(() => {
+        limpiarFormularioDerivar()
+        btn.disabled = false
+        texto.textContent = 'Guardar Derivación'
+      }, 1500)
+
+    } catch (err) {
+      btn.disabled = false
+      spinner.style.display = 'none'
+      texto.textContent = 'Guardar Derivación'
+      mostrarError('errorAsuntoDerivar', err.message || 'Error al guardar la derivación')
+    }
   }
 })()
