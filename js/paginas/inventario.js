@@ -48,6 +48,8 @@
       }
       sesion = session
 
+      if (!await verificarAcceso('inventario')) return
+
       const { data: perfil } = await supabase
         .from('perfiles')
         .select('id, nombre_completo, apellidos_completos, nombre_usuario')

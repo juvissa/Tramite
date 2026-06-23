@@ -1,5 +1,6 @@
 document.addEventListener('lateral:listo', async () => {
   if (document.body.dataset.moduloActivo !== 'usuarios') return;
+  if (!await verificarAcceso('usuarios')) return;
 
   const contenedor = document.querySelector('.usuarios-content');
   const panel = document.getElementById('panelFormulario');

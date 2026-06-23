@@ -67,6 +67,8 @@
     }
     sesion = session
 
+    if (!await verificarAcceso('reportes')) return
+
     await Promise.all([
       cargarDocumentos(),
       cargarAreas(),

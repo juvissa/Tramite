@@ -1,5 +1,6 @@
 document.addEventListener('lateral:listo', async () => {
   if (document.body.dataset.moduloActivo !== 'area') return;
+  if (!await verificarAcceso('area')) return;
 
   const contenedor = document.querySelector('.areas-content');
   const panel = document.getElementById('panelFormulario');

@@ -18,3 +18,40 @@ if (typeof window.supabase === 'undefined' || typeof window.supabase.createClien
     CONFIGURACION.supabase.anonKey
   );
 }
+
+/* ════════════════════════════════════════════
+   AUTORIZACIÓN POR ROL
+   ════════════════════════════════════════════ */
+const MODULO_ROLES = {
+  dashboard: [1, 2],
+  usuarios: [1, 2],
+  'registrar-tramite': [1, 2, 3],
+  documentos: [1, 2, 3],
+  area: [1, 2],
+  reportes: [1, 2],
+  inventario: [1, 2, 3],
+}
+
+async function verificarAcceso(modulo) {
+  try {
+    if (!window.supabase) return false
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      window.location.href = 'index.html'
+      return false
+    }
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', session.user.id)
+      .single()
+    if (!perfil || !MODULO_ROLES[modulo].includes(perfil.rol)) {
+      window.location.href = 'documentos.html'
+      return false
+    }
+    return true
+  } catch (err) {
+    window.location.href = 'index.html'
+    return false
+  }
+}

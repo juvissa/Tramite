@@ -33,6 +33,8 @@
     }
     sesion = session
 
+    if (!await verificarAcceso('registrar-tramite')) return
+
     const { data: perfil, error: errorPerfil } = await supabase
       .from('perfiles')
       .select('id, nombre_completo, apellidos_completos, nombre_usuario, gmail, rol, firma_url')

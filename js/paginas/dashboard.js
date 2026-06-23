@@ -59,6 +59,8 @@
     }
     sesion = session
 
+    if (!await verificarAcceso('dashboard')) return
+
     const { data: perfil } = await supabase
       .from('perfiles')
       .select('id, nombre_completo, apellidos_completos')

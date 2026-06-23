@@ -41,6 +41,8 @@
     }
     sesion = session
 
+    if (!await verificarAcceso('documentos')) return
+
     await Promise.all([
       cargarDocumentos(),
       cargarPerfiles(),
