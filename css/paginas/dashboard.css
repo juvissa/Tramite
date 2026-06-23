@@ -987,6 +987,15 @@ body.visible {
   background: var(--color-exito);
 }
 
+.dash-cal-dia-feriado .dash-cal-dia-numero {
+  color: var(--color-error);
+}
+
+.dash-cal-dia-feriado:not(.seleccionado) .dash-cal-dia-contenido {
+  background: rgba(214, 40, 40, 0.08);
+  border-radius: 6px;
+}
+
 .dash-cal-divider {
   border-top: 1px solid var(--borde-color);
   margin: var(--espaciado-md) 0;
@@ -1000,6 +1009,20 @@ body.visible {
   gap: var(--espaciado-sm);
   min-height: 80px;
   flex: 1;
+}
+
+.dash-feriado-label {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-sm);
+  font-size: var(--texto-sm);
+  color: var(--color-error);
+  font-weight: var(--peso-medium);
+  padding: var(--espaciado-sm) 0;
+}
+
+.dash-feriado-label i {
+  font-size: 1rem;
 }
 
 .dash-cal-evento-placeholder {

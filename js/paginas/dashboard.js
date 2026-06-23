@@ -26,6 +26,26 @@
 
   const MESES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SET', 'OCT', 'NOV', 'DIC']
 
+  const FERIADOS = [
+    { fecha: '2026-01-01', nombre: 'Año Nuevo' },
+    { fecha: '2026-04-02', nombre: 'Jueves Santo' },
+    { fecha: '2026-04-03', nombre: 'Viernes Santo' },
+    { fecha: '2026-05-01', nombre: 'Día del Trabajo' },
+    { fecha: '2026-06-29', nombre: 'San Pedro y San Pablo' },
+    { fecha: '2026-07-28', nombre: 'Fiestas Patrias' },
+    { fecha: '2026-07-29', nombre: 'Fiestas Patrias' },
+    { fecha: '2026-08-30', nombre: 'Santa Rosa de Lima' },
+    { fecha: '2026-10-08', nombre: 'Combate de Angamos' },
+    { fecha: '2026-11-01', nombre: 'Todos los Santos' },
+    { fecha: '2026-12-08', nombre: 'Inmaculada Concepción' },
+    { fecha: '2026-12-09', nombre: 'Batalla de Ayacucho' },
+    { fecha: '2026-12-25', nombre: 'Navidad' }
+  ]
+
+  function obtenerFeriado(fechaStr) {
+    return FERIADOS.find(f => f.fecha === fechaStr)
+  }
+
   document.addEventListener('lateral:listo', inicializar)
 
   async function inicializar() {
@@ -292,6 +312,11 @@
     if (fechaStr && fechaStr === fechaSeleccionada) btn.classList.add('seleccionado')
 
     if (fechaStr) {
+      const feriado = obtenerFeriado(fechaStr)
+      if (feriado) {
+        btn.classList.add('dash-cal-dia-feriado')
+        btn.title = feriado.nombre
+      }
       btn.dataset.fecha = fechaStr
       btn.addEventListener('click', () => seleccionarDia(fechaStr))
     }
@@ -367,8 +392,15 @@
       .filter(e => e.fecha_evento === fechaStr)
       .sort((a, b) => (a.hora_evento || '').localeCompare(b.hora_evento || ''))
 
+    const feriado = obtenerFeriado(fechaStr)
+    let html = ''
+
+    if (feriado) {
+      html += `<div class="dash-feriado-label"><i class="ph ph-calendar-x"></i> Feriado: ${escaparHtml(feriado.nombre)}</div>`
+    }
+
     if (eventos.length === 0) {
-      contenedor.innerHTML = '<div class="dash-cal-evento-placeholder">No existen eventos programados para esta fecha.</div>'
+      contenedor.innerHTML = html + '<div class="dash-cal-evento-placeholder">No existen eventos programados para esta fecha.</div>'
       btnVerTodas.style.display = 'none'
       return
     }
@@ -378,7 +410,7 @@
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     })
 
-    let html = `<div class="dash-dia-seleccionado-label">${fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)}</div>`
+    html += `<div class="dash-dia-seleccionado-label">${fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)}</div>`
 
     const mostrar = eventos.slice(0, 4)
     mostrar.forEach(ev => {
@@ -834,16 +866,26 @@
 
     document.getElementById('modalEventosDia').classList.add('activo')
 
+    const feriado = obtenerFeriado(fechaStr)
     const eventos = eventosDelMes
       .filter(e => e.fecha_evento === fechaStr)
       .sort((a, b) => (a.hora_evento || '').localeCompare(b.hora_evento || ''))
 
+    let html = ''
+    if (feriado) {
+      html += `<div class="dash-feriado-label"><i class="ph ph-calendar-x"></i> Feriado: ${escaparHtml(feriado.nombre)}</div>`
+    }
+
     if (eventos.length === 0) {
-      contenedor.innerHTML = '<div class="dash-empty">No hay eventos para esta fecha.</div>'
+      if (feriado) {
+        contenedor.innerHTML = html + '<div class="dash-empty">No hay eventos para esta fecha.</div>'
+      } else {
+        contenedor.innerHTML = '<div class="dash-empty">No hay eventos para esta fecha.</div>'
+      }
       return
     }
 
-    contenedor.innerHTML = eventos.map(ev => {
+    html += eventos.map(ev => {
       const horaTexto = ev.hora_evento ? formatearHora12h(ev.hora_evento) : ''
       const badgeClase = ev.completado ? 'finalizado' : 'programado'
       const badgeTexto = ev.completado ? 'Finalizado' : 'Programado'
@@ -864,6 +906,8 @@
         </div>
       `
     }).join('')
+
+    contenedor.innerHTML = html
   }
 
   function cerrarModalEventosDia() {
