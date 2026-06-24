@@ -6,6 +6,8 @@
   let perfilActual = null
   let nombreCarpeta = ''
   let areas = []
+  let firmantesDisponibles = []
+  let firmanteSeleccionado = null
   let adjuntosSeleccionados = []
   let datePicker = null
   let datePickerDerivar = null
@@ -51,17 +53,18 @@
     await Promise.all([
       cargarAreas(),
       precargarNumeros(),
+      cargarFirmantes(),
     ])
 
     inicializarDatePicker()
     inicializarDesplegableTipoDoc()
     inicializarDesplegableArea()
     inicializarDesplegablePrioridad()
+    inicializarDesplegableFirmante()
     inicializarFileInput()
     inicializarBotones()
 
-    const nombreCompleto = `${perfil.nombre_completo || ''} ${perfil.apellidos_completos || ''}`.trim()
-    document.getElementById('campoAutor').value = nombreCompleto
+    const nombreCompleto = formatearNombreCompleto(perfil)
     document.getElementById('campoRemitente').value = nombreCompleto
 
     inicializarDerivar()
@@ -74,6 +77,27 @@
       .order('nombre', { ascending: true })
 
     if (data) areas = data
+  }
+
+  async function cargarFirmantes() {
+    const { data, error } = await supabase
+      .from('perfiles')
+      .select('id, nombre_completo, apellidos_completos, firma_url, rol, activo')
+      .in('rol', [1, 2])
+      .eq('activo', true)
+      .order('nombre_completo', { ascending: true })
+
+    if (error) {
+      console.error('[Registrar] Error al cargar firmantes:', error)
+      firmantesDisponibles = []
+      return
+    }
+
+    firmantesDisponibles = data || []
+  }
+
+  function formatearNombreCompleto(persona) {
+    return `${persona?.nombre_completo || ''} ${persona?.apellidos_completos || ''}`.trim()
   }
 
   function inicializarDatePicker() {
@@ -276,6 +300,66 @@
     })
   }
 
+  /* ─── DESPLEGABLE FIRMANTE ─── */
+  function inicializarDesplegableFirmante() {
+    const dropdown = document.getElementById('dropdownFirmante')
+    const trigger = document.getElementById('triggerFirmante')
+    const text = trigger.querySelector('.filtro-select-text')
+    const wrapper = document.getElementById('wrapperFirmante')
+
+    dropdown.innerHTML = ''
+    firmanteSeleccionado = null
+    text.innerHTML = 'Seleccione un firmante'
+    delete trigger.dataset.value
+
+    firmantesDisponibles.forEach((firmante) => {
+      const opt = document.createElement('div')
+      opt.className = 'filtro-option'
+      opt.dataset.value = firmante.id
+
+      const nombreCompleto = formatearNombreCompleto(firmante) || 'Sin nombre'
+      const tieneFirma = !!firmante.firma_url
+      opt.innerHTML = `
+        <span>${escaparHtml(nombreCompleto)}</span>
+        <span class="firmante-estado ${tieneFirma ? 'con-firma' : 'sin-firma'}">${tieneFirma ? 'Con firma' : 'Sin firma'}</span>
+      `
+      dropdown.appendChild(opt)
+    })
+
+    dropdown.addEventListener('click', (e) => {
+      const opt = e.target.closest('.filtro-option')
+      if (!opt) return
+
+      dropdown.querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+      opt.classList.add('seleccionada')
+
+      const firmante = firmantesDisponibles.find((f) => f.id === opt.dataset.value)
+      if (firmante) {
+        const nombreCompleto = formatearNombreCompleto(firmante) || 'Sin nombre'
+        const tieneFirma = !!firmante.firma_url
+        text.innerHTML = `
+          ${escaparHtml(nombreCompleto)}
+          <span class="firmante-estado ${tieneFirma ? 'con-firma' : 'sin-firma'}">${tieneFirma ? 'Con firma' : 'Sin firma'}</span>
+        `
+        trigger.dataset.value = firmante.id
+        firmanteSeleccionado = firmante
+      }
+
+      wrapper.classList.remove('abierto')
+      document.getElementById('errorFirmante').textContent = ''
+    })
+
+    trigger.addEventListener('click', () => {
+      wrapper.classList.toggle('abierto')
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.classList.remove('abierto')
+      }
+    })
+  }
+
   /* ─── FILE INPUT ─── */
   function inicializarFileInput() {
     const input = document.getElementById('campoAdjuntos')
@@ -357,6 +441,12 @@
     const optPriMedia = document.querySelector('#dropdownPrioridad .filtro-option[data-value="Media"]')
     if (optPriMedia) optPriMedia.classList.add('seleccionada')
 
+    const triggerFirmante = document.getElementById('triggerFirmante')
+    triggerFirmante.querySelector('.filtro-select-text').textContent = 'Seleccione un firmante'
+    delete triggerFirmante.dataset.value
+    document.getElementById('dropdownFirmante').querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
+    firmanteSeleccionado = null
+
     document.getElementById('campoDestinatario').value = ''
     document.getElementById('campoCargo').value = ''
 
@@ -394,8 +484,11 @@
     if (!tipoDocumento) { mostrarError('errorAsunto', 'Seleccione un tipo de documento'); valido = false }
     if (!asunto) { mostrarError('errorAsunto', 'El asunto es obligatorio'); valido = false }
     if (!cuerpo) { mostrarError('errorCuerpo', 'El cuerpo del documento es obligatorio'); valido = false }
+    if (!firmanteSeleccionado) { mostrarError('errorFirmante', 'Seleccione un firmante'); valido = false }
 
     if (!valido) return
+
+    const firmaUrl = firmanteSeleccionado?.firma_url || null
 
     const btn = document.getElementById('btnGuardarTramite')
     const spinner = document.getElementById('spinnerTramite')
@@ -436,7 +529,7 @@
         cargo,
         asunto,
         cuerpo,
-        firma_url: perfilActual.firma_url,
+        firma_url: firmaUrl,
       })
 
       // ─── 3. Subir archivos a temp/ ───
@@ -464,6 +557,7 @@
             prioridad,
             autor_id: perfilActual.id,
             remitente_id: perfilActual.id,
+            firmante_id: firmanteSeleccionado.id,
             area_id: areaId,
             destinatario: destinatario || null,
             cargo_destinatario: cargo || null,
@@ -490,7 +584,7 @@
           cargo,
           asunto,
           cuerpo,
-          firma_url: perfilActual.firma_url,
+          firma_url: firmaUrl,
         })
       }
 

@@ -185,6 +185,21 @@
   margin-top: 2px;
 }
 
+.firmante-estado {
+  margin-left: 6px;
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-medium);
+  white-space: nowrap;
+}
+
+.firmante-estado.con-firma {
+  color: var(--color-exito);
+}
+
+.firmante-estado.sin-firma {
+  color: var(--color-error);
+}
+
 /* ── File upload ── */
 .file-contenedor {
   position: relative;

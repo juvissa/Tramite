@@ -73,10 +73,15 @@
               </div>
             </div>
             <div class="campo-grupo">
-              <label>Autor / Firmante del Documento</label>
-              <div class="input-wrapper">
-                <input type="text" id="campoAutor" readonly />
+              <label>Firmante del Documento</label>
+              <div class="filtro-select-wrapper" id="wrapperFirmante">
+                <button type="button" class="filtro-select-trigger" id="triggerFirmante">
+                  <span class="filtro-select-text">Seleccione un firmante</span>
+                  <i class="ph ph-caret-down filtro-select-arrow"></i>
+                </button>
+                <div class="filtro-dropdown" id="dropdownFirmante"></div>
               </div>
+              <span class="input-error" id="errorFirmante"></span>
             </div>
           </div>
         </div>

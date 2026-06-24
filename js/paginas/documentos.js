@@ -13,6 +13,7 @@
   let docActual = null
   let archivosDocumentoActual = []
   let docsClasificados = {}
+  let perfilFirmanteActual = null
   let wordBlobActual = null       // Blob Word generado dinámicamente
   let pdfBlobActual = null        // Blob PDF convertido desde la Edge Function
   let wordBlobUrl = null          // Object URL para imprimir
@@ -491,18 +492,25 @@
     archivosDocumentoActual = error ? [] : (archivos || [])
     docsClasificados = clasificarArchivos(archivosDocumentoActual)
 
-    // Recuperar firma_url del remitente desde perfiles
+    const idFirmante = docActual.firmante_id || docActual.remitente_id
+    console.log('[Detalle] firmante_id:', docActual.firmante_id)
+    console.log('[Detalle] remitente_id:', docActual.remitente_id)
+    console.log('[Detalle] idFirmante usado:', idFirmante)
+
+    // Recuperar firma_url del firmante desde perfiles
     let firmaUrl = null
-    let perfilFirmante = null
-    if (docActual.remitente_id) {
+    perfilFirmanteActual = null
+    if (idFirmante) {
       const { data: perfil } = await supabase
         .from('perfiles')
         .select('firma_url, nombre_completo, apellidos_completos')
-        .eq('id', docActual.remitente_id)
+        .eq('id', idFirmante)
         .single()
-      perfilFirmante = perfil || null
+      perfilFirmanteActual = perfil || null
       firmaUrl = perfil?.firma_url || null
     }
+
+    console.log('[Detalle] firma_url:', firmaUrl)
 
 
 
@@ -530,7 +538,7 @@
 
     // Dibujar el PDF institucional con jsPDF
     if (wordBlobActual) {
-      await generarPDFInstitucional(docActual, perfilFirmante)
+      await generarPDFInstitucional(docActual, perfilFirmanteActual)
     } else {
       mostrarPlaceholder('No se pudo generar el documento base. Verifique los datos del trámite.')
     }
@@ -559,6 +567,7 @@
     if (pdfBlobUrl) { URL.revokeObjectURL(pdfBlobUrl); pdfBlobUrl = null }
     
     vistaActual = 'documento'   // reset para la próxima apertura
+    perfilFirmanteActual = null
     wordBlobActual = null
     pdfBlobActual = null
     docActual = null
@@ -590,6 +599,8 @@
     document.getElementById('infoPrioridad').innerHTML = badgePrioridad(doc.prioridad)
     document.getElementById('infoFecha').textContent = doc.fecha || '—'
     document.getElementById('infoRemitente').textContent = obtenerRemitente(doc)
+    const idFirmante = doc.firmante_id || doc.remitente_id
+    document.getElementById('infoFirmante').textContent = mapaPerfiles[idFirmante] || '—'
     document.getElementById('infoDestinatario').textContent = doc.destinatario || '—'
   }
 
@@ -861,7 +872,7 @@
       } else if (wordBlobActual) {
         // Si por alguna razón tenemos Word pero el PDF aún no cargó
         // (ya no depende de Word, se genera paralelo, pero como resguardo)
-        await generarPDFInstitucional(docActual, null)
+        await generarPDFInstitucional(docActual, perfilFirmanteActual)
       } else {
         if (vistaActual !== 'documento') return
         mostrarPlaceholder('No hay documento disponible.')

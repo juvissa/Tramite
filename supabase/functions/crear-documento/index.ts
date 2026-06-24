@@ -24,7 +24,7 @@ serve(async (req) => {
     const body = await req.json()
     const {
       tipo, tipo_documento, fecha, prioridad, autor_id, remitente_id, area_id,
-      destinatario, cargo_destinatario, asunto, cuerpo_documento,
+      destinatario, cargo_destinatario, asunto, cuerpo_documento, firmante_id,
     } = body
 
     if (!tipo || !tipo_documento ||
@@ -82,7 +82,8 @@ serve(async (req) => {
       p_cargo_destinatario: cargo_destinatario || null,
       p_asunto: asunto,
       p_cuerpo_documento: cuerpo_documento,
-      p_creado_por: user.id
+      p_creado_por: user.id,
+      p_firmante_id: firmante_id || null,
     })
 
     if (rpcError) {
