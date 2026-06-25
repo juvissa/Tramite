@@ -14,12 +14,12 @@
   const cacheNumeros = {}
 
   const TIPOS_DOCUMENTO = [
-    { id: 'CARTA', nombre: 'Carta Nº' },
-    { id: 'MEMORANDUM', nombre: 'Memorándum Nº' },
-    { id: 'OFICIO', nombre: 'Oficio Nº' },
-    { id: 'SOLICITUD', nombre: 'Solicitud Nº' },
-    { id: 'INFORME', nombre: 'Informe Nº' },
-    { id: 'NOTAS', nombre: 'Notas Nº' },
+    { id: 'CARTA', nombre: 'Carta N°' },
+    { id: 'MEMORANDUM', nombre: 'Memorándum N°' },
+    { id: 'OFICIO', nombre: 'Oficio N°' },
+    { id: 'SOLICITUD', nombre: 'Solicitud N°' },
+    { id: 'INFORME', nombre: 'Informe N°' },
+    { id: 'NOTAS', nombre: 'Nota N°' },
   ]
 
   document.addEventListener('DOMContentLoaded', inicializar)
@@ -93,7 +93,7 @@
       return
     }
 
-    firmantesDisponibles = data || []
+    firmantesDisponibles = (data || []).filter((p) => !!p.firma_url)
   }
 
   function formatearNombreCompleto(persona) {
@@ -307,57 +307,97 @@
     const text = trigger.querySelector('.filtro-select-text')
     const wrapper = document.getElementById('wrapperFirmante')
 
+    if (!dropdown.dataset.inicializado) {
+      dropdown.addEventListener('click', (e) => {
+        const opt = e.target.closest('.filtro-option')
+        if (!opt) return
+
+        const firmante = firmantesDisponibles.find((f) => f.id === opt.dataset.value)
+        if (!firmante) return
+
+        seleccionarFirmanteUI(firmante)
+        wrapper.classList.remove('abierto')
+        document.getElementById('errorFirmante').textContent = ''
+      })
+
+      trigger.addEventListener('click', () => {
+        if (!trigger.disabled) {
+          wrapper.classList.toggle('abierto')
+        }
+      })
+
+      document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+          wrapper.classList.remove('abierto')
+        }
+      })
+
+      dropdown.dataset.inicializado = '1'
+    }
+
+    actualizarSelectorFirmante()
+  }
+
+  function seleccionarFirmanteUI(firmante) {
+    const trigger = document.getElementById('triggerFirmante')
+    const text = trigger.querySelector('.filtro-select-text')
+    trigger.dataset.value = firmante.id
+    firmanteSeleccionado = firmante
+
+    const nombreCompleto = formatearNombreCompleto(firmante) || 'Sin nombre'
+    text.innerHTML = `
+      ${escaparHtml(nombreCompleto)}
+      <span class="firmante-estado con-firma">Con firma</span>
+    `
+  }
+
+  function actualizarSelectorFirmante() {
+    const dropdown = document.getElementById('dropdownFirmante')
+    const trigger = document.getElementById('triggerFirmante')
+    const text = trigger.querySelector('.filtro-select-text')
+    const errorFirmante = document.getElementById('errorFirmante')
+    const btnGuardarTramite = document.getElementById('btnGuardarTramite')
+    const wrapper = document.getElementById('wrapperFirmante')
+
     dropdown.innerHTML = ''
-    firmanteSeleccionado = null
-    text.innerHTML = 'Seleccione un firmante'
     delete trigger.dataset.value
+
+    if (firmantesDisponibles.length === 0) {
+      firmanteSeleccionado = null
+      text.textContent = 'No hay firmantes con firma registrada.'
+      trigger.disabled = true
+      btnGuardarTramite.disabled = true
+      errorFirmante.textContent = 'No hay firmantes con firma registrada.'
+      return
+    }
+
+    btnGuardarTramite.disabled = false
+    errorFirmante.textContent = ''
 
     firmantesDisponibles.forEach((firmante) => {
       const opt = document.createElement('div')
       opt.className = 'filtro-option'
       opt.dataset.value = firmante.id
-
-      const nombreCompleto = formatearNombreCompleto(firmante) || 'Sin nombre'
-      const tieneFirma = !!firmante.firma_url
+      if (firmanteSeleccionado && firmanteSeleccionado.id === firmante.id) {
+        opt.classList.add('seleccionada')
+      }
       opt.innerHTML = `
-        <span>${escaparHtml(nombreCompleto)}</span>
-        <span class="firmante-estado ${tieneFirma ? 'con-firma' : 'sin-firma'}">${tieneFirma ? 'Con firma' : 'Sin firma'}</span>
+        <span>${escaparHtml(formatearNombreCompleto(firmante) || 'Sin nombre')}</span>
+        <span class="firmante-estado con-firma">Con firma</span>
       `
       dropdown.appendChild(opt)
     })
 
-    dropdown.addEventListener('click', (e) => {
-      const opt = e.target.closest('.filtro-option')
-      if (!opt) return
-
-      dropdown.querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
-      opt.classList.add('seleccionada')
-
-      const firmante = firmantesDisponibles.find((f) => f.id === opt.dataset.value)
-      if (firmante) {
-        const nombreCompleto = formatearNombreCompleto(firmante) || 'Sin nombre'
-        const tieneFirma = !!firmante.firma_url
-        text.innerHTML = `
-          ${escaparHtml(nombreCompleto)}
-          <span class="firmante-estado ${tieneFirma ? 'con-firma' : 'sin-firma'}">${tieneFirma ? 'Con firma' : 'Sin firma'}</span>
-        `
-        trigger.dataset.value = firmante.id
-        firmanteSeleccionado = firmante
-      }
-
+    if (firmantesDisponibles.length === 1) {
+      seleccionarFirmanteUI(firmantesDisponibles[0])
+      trigger.disabled = true
       wrapper.classList.remove('abierto')
-      document.getElementById('errorFirmante').textContent = ''
-    })
+      return
+    }
 
-    trigger.addEventListener('click', () => {
-      wrapper.classList.toggle('abierto')
-    })
-
-    document.addEventListener('click', (e) => {
-      if (!wrapper.contains(e.target)) {
-        wrapper.classList.remove('abierto')
-      }
-    })
+    trigger.disabled = false
+    firmanteSeleccionado = null
+    text.textContent = 'Seleccione un firmante'
   }
 
   /* ─── FILE INPUT ─── */
@@ -441,11 +481,7 @@
     const optPriMedia = document.querySelector('#dropdownPrioridad .filtro-option[data-value="Media"]')
     if (optPriMedia) optPriMedia.classList.add('seleccionada')
 
-    const triggerFirmante = document.getElementById('triggerFirmante')
-    triggerFirmante.querySelector('.filtro-select-text').textContent = 'Seleccione un firmante'
-    delete triggerFirmante.dataset.value
-    document.getElementById('dropdownFirmante').querySelectorAll('.filtro-option').forEach((o) => o.classList.remove('seleccionada'))
-    firmanteSeleccionado = null
+    actualizarSelectorFirmante()
 
     document.getElementById('campoDestinatario').value = ''
     document.getElementById('campoCargo').value = ''
@@ -484,7 +520,13 @@
     if (!tipoDocumento) { mostrarError('errorAsunto', 'Seleccione un tipo de documento'); valido = false }
     if (!asunto) { mostrarError('errorAsunto', 'El asunto es obligatorio'); valido = false }
     if (!cuerpo) { mostrarError('errorCuerpo', 'El cuerpo del documento es obligatorio'); valido = false }
-    if (!firmanteSeleccionado) { mostrarError('errorFirmante', 'Seleccione un firmante'); valido = false }
+    if (firmantesDisponibles.length === 0) {
+      mostrarError('errorFirmante', 'No hay firmantes con firma registrada.')
+      valido = false
+    } else if (!firmanteSeleccionado) {
+      mostrarError('errorFirmante', 'Seleccione un firmante')
+      valido = false
+    }
 
     if (!valido) return
 
