@@ -86,11 +86,21 @@ body {
   display: flex;
   align-items: center;
   gap: var(--espaciado-md);
+  margin-left: auto;
+  flex-shrink: 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .encabezado-usuario {
   font-size: var(--texto-sm);
   color: var(--color-texto-secundario);
+  min-width: 0;
+  max-width: clamp(110px, 14vw, 180px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .encabezado-avatar {
@@ -380,6 +390,12 @@ body {
 
 @media (max-width: 768px) {
   .encabezado-usuario {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .encabezado-avatar {
     display: none;
   }
 }
