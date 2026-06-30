@@ -174,17 +174,46 @@ const MODULO_ROLES = {
 async function verificarAcceso(modulo) {
   try {
     if (!window.supabase) return false
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const rolesPermitidos = MODULO_ROLES[modulo] || []
+
+    let session = null
+    let perfil = null
+
+    try {
+      if (typeof obtenerEstadoSesion === 'function') {
+        const estado = await obtenerEstadoSesion()
+        session = estado?.session || null
+        perfil = estado?.perfil || null
+      }
+
+      if (!perfil && typeof obtenerPerfil === 'function') {
+        perfil = await obtenerPerfil()
+      }
+    } catch (errEstado) {
+      session = null
+      perfil = null
+    }
+
+    if (!session || !perfil) {
+      const { data: { session: sessionDirecta } } = await supabase.auth.getSession()
+      session = sessionDirecta || session
+
+      if (session && !perfil) {
+        const { data: perfilDirecto } = await supabase
+          .from('perfiles')
+          .select('rol')
+          .eq('id', session.user.id)
+          .single()
+        perfil = perfilDirecto || null
+      }
+    }
+
+    if (!session || !perfil) {
       window.location.href = 'index.html'
       return false
     }
-    const { data: perfil } = await supabase
-      .from('perfiles')
-      .select('rol')
-      .eq('id', session.user.id)
-      .single()
-    if (!perfil || !MODULO_ROLES[modulo].includes(perfil.rol)) {
+
+    if (!rolesPermitidos.includes(perfil.rol)) {
       window.location.href = 'documentos.html'
       return false
     }
