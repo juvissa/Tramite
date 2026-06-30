@@ -5,17 +5,27 @@ document.addEventListener('header:listo', async () => {
   document.querySelector('.contenido-principal').insertAdjacentHTML('beforebegin', html);
 
   const moduloActivo = document.body.dataset.moduloActivo;
-  if (moduloActivo) {
-    const item = document.querySelector(`.sidebar-item[data-modulo="${moduloActivo}"]`);
-    if (item) item.classList.add('activo');
+
+  const estadoSesion = typeof obtenerEstadoSesion === 'function'
+    ? await obtenerEstadoSesion()
+    : null;
+
+  let perfil = estadoSesion?.perfil || null;
+
+  if (!perfil && typeof obtenerPerfil === 'function') {
+    perfil = await obtenerPerfil();
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: perfil } = await supabase
-    .from('perfiles')
-    .select('rol')
-    .ilike('gmail', user.email)
-    .maybeSingle();
+  if (!perfil) {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: perfilFallback } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .ilike('gmail', user.email)
+      .maybeSingle();
+
+    perfil = perfilFallback || null;
+  }
 
   if (perfil) {
     document.querySelectorAll('.sidebar-item[data-roles]').forEach(item => {
@@ -24,6 +34,15 @@ document.addEventListener('header:listo', async () => {
         item.style.display = 'none';
       }
     });
+  }
+
+  document.querySelectorAll('.sidebar-item.activo').forEach(item => {
+    item.classList.remove('activo');
+  });
+
+  if (moduloActivo) {
+    const item = document.querySelector(`.sidebar-item[data-modulo="${moduloActivo}"]`);
+    if (item) item.classList.add('activo');
   }
 
   // ─── SIDEBAR TOGGLE (responsive overlay) ───

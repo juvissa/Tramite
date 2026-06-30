@@ -18,12 +18,12 @@ body.visible {
   transition: margin-left 0.25s ease;
 }
 
-.sidebar:hover + .contenido-principal {
+.sidebar:hover ~ .contenido-principal {
   margin-left: 282px;
 }
 
 @media (max-width: 1024px) {
-  .sidebar:hover + .contenido-principal {
+  .sidebar:hover ~ .contenido-principal {
     margin-left: 0;
   }
 }
