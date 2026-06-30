@@ -46,6 +46,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================
   const errorUsuario = document.getElementById('error-usuario');
   const errorContrasena = document.getElementById('error-contrasena');
+  let loginTimeoutId = null;
+
+  function limpiarTimerLogin() {
+    if (loginTimeoutId) {
+      clearTimeout(loginTimeoutId);
+      loginTimeoutId = null;
+    }
+  }
+
+  function esErrorDeRedLogin(err) {
+    const mensaje = typeof err?.message === 'string' ? err.message : String(err || '');
+    const texto = mensaje.toLowerCase();
+    return navigator.onLine === false || texto.includes('failed to fetch') || texto.includes('networkerror') || texto.includes('load failed');
+  }
 
   formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -58,7 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!usuario || !contrasena) return;
 
+    if (navigator.onLine === false) {
+      errorContrasena.textContent = 'No se pudo conectar. Revisa tu conexión a internet e intenta nuevamente.';
+      return;
+    }
+
     setCargandoLogin(true);
+    let loginEnProgreso = true;
+    loginTimeoutId = setTimeout(() => {
+      if (loginEnProgreso) {
+        errorContrasena.textContent = 'La conexión está tardando más de lo normal...';
+      }
+    }, 15000);
 
     try {
       const { data: perfil, error: errBusqueda } = await supabase
@@ -68,13 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
         .maybeSingle();
 
       if (errBusqueda || !perfil) {
-        setCargandoLogin(false);
+        if (errBusqueda && esErrorDeRedLogin(errBusqueda)) {
+          errorContrasena.textContent = 'No se pudo conectar. Revisa tu conexión a internet e intenta nuevamente.';
+          return;
+        }
         errorUsuario.textContent = 'Usuario no encontrado';
         return;
       }
 
       if (perfil.activo === false) {
-        setCargandoLogin(false);
         errorUsuario.textContent = 'Cuenta desactivada. Contacte al administrador';
         return;
       }
@@ -84,9 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
         password: contrasena
       });
 
-      setCargandoLogin(false);
-
       if (errAuth) {
+        if (esErrorDeRedLogin(errAuth)) {
+          errorContrasena.textContent = 'No se pudo conectar. Revisa tu conexión a internet e intenta nuevamente.';
+          return;
+        }
         errorContrasena.textContent = traducirError(errAuth.message);
         return;
       }
@@ -100,8 +129,15 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = 'dashboard.html';
 
     } catch (err) {
+      if (esErrorDeRedLogin(err)) {
+        errorContrasena.textContent = 'No se pudo conectar. Revisa tu conexión a internet e intenta nuevamente.';
+      } else {
+        errorContrasena.textContent = 'Error de conexión con el servidor';
+      }
+    } finally {
+      loginEnProgreso = false;
+      limpiarTimerLogin();
       setCargandoLogin(false);
-      errorContrasena.textContent = 'Error de conexión con el servidor';
     }
   });
 
