@@ -90,7 +90,7 @@ body {
   flex-shrink: 0;
   max-width: 100%;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .encabezado-usuario {

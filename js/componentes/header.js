@@ -3,8 +3,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   let userId, userEmail
 
   try {
-    const resp = await fetch('js/componentes/header.html');
-    const html = await resp.text();
+    const htmlPromise = fetch('js/componentes/header.html').then(resp => resp.text());
+    const estadoSesionPromise = typeof obtenerEstadoSesion === 'function'
+      ? obtenerEstadoSesion()
+      : Promise.resolve(null);
+
+    const html = await htmlPromise;
     document.body.insertAdjacentHTML('afterbegin', html);
 
     const pagina = document.body.dataset.pagina;
@@ -12,9 +16,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (pagina) document.getElementById('encabezadoPagina').textContent = pagina;
     if (ruta) document.getElementById('encabezadoRuta').textContent = ruta;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const estadoSesion = await estadoSesionPromise;
+    const session = estadoSesion?.session || null;
+    const user = estadoSesion?.user || session?.user || null;
+    const perfil = estadoSesion?.perfil || null;
 
-    if (!user) {
+    if (!session || !user) {
       window.location.href = 'index.html';
       return;
     }
@@ -29,6 +36,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       return div.innerHTML
     }
 
+    if (perfil) {
+      const primerApellido = perfil.apellidos_completos.split(' ')[0];
+      document.getElementById('txtNombreUsuario').textContent =
+        `${perfil.nombre_completo} ${primerApellido}`;
+      document.getElementById('avatarIniciales').textContent =
+        (perfil.nombre_completo.charAt(0) + primerApellido.charAt(0)).toUpperCase();
+    } else {
+      const { data: perfilFallback } = await supabase
+        .from('perfiles')
+        .select('nombre_completo, apellidos_completos')
+        .ilike('gmail', userEmail)
+        .maybeSingle();
+
+      if (perfilFallback) {
+        const primerApellido = perfilFallback.apellidos_completos.split(' ')[0];
+        document.getElementById('txtNombreUsuario').textContent =
+          `${perfilFallback.nombre_completo} ${primerApellido}`;
+        document.getElementById('avatarIniciales').textContent =
+          (perfilFallback.nombre_completo.charAt(0) + primerApellido.charAt(0)).toUpperCase();
+      }
+    }
+
   } catch (err) {
     window.location.href = 'index.html';
     return;
@@ -40,20 +69,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ─── POST-RENDER: CARGA PROGRESIVA ───
   ;(async () => {
     try {
-      const { data: perfil } = await supabase
-        .from('perfiles')
-        .select('nombre_completo, apellidos_completos')
-        .ilike('gmail', userEmail)
-        .maybeSingle();
-
-      if (perfil) {
-        const primerApellido = perfil.apellidos_completos.split(' ')[0];
-        document.getElementById('txtNombreUsuario').textContent =
-          `${perfil.nombre_completo} ${primerApellido}`;
-        document.getElementById('avatarIniciales').textContent =
-          (perfil.nombre_completo.charAt(0) + primerApellido.charAt(0)).toUpperCase();
-      }
-
       // ─── NOTIFICACIONES ───
       let notificaciones = [];
       let dropdownAbierto = false;
@@ -148,8 +163,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           .order('created_at', { ascending: false })
           .limit(10);
         if (!error && data) {
-          notificaciones = data;
+          const mapa = new Map();
+          for (const n of data || []) mapa.set(n.id, n);
+          for (const n of notificaciones) mapa.set(n.id, n);
+          notificaciones = Array.from(mapa.values())
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 10);
           actualizarBadge();
+          if (dropdownAbierto) renderizarDropdown();
         }
       }
 
@@ -270,7 +291,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           { event: 'INSERT', schema: 'public', table: 'agenda_notificaciones',
             filter: `usuario_id=eq.${userId}` },
           async (payload) => {
-            console.log('[Notificación] Recibida:', payload.new);
             notificaciones.unshift(payload.new);
             if (notificaciones.length > 10) notificaciones.pop();
             actualizarBadge();
