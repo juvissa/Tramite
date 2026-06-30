@@ -21,12 +21,14 @@
   opacity: 0;
   transition: opacity var(--transicion-normal), padding-left var(--transicion-normal);
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .usuarios-panel.abierto {
   width: fit-content;
   opacity: 1;
   padding-left: var(--espaciado-lg);
+  margin-top: var(--espaciado-lg);
   overflow-y: auto;
   max-height: calc(100vh - 94px);
 }
@@ -37,6 +39,7 @@
   box-shadow: var(--sombra-sm);
   width: fit-content;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .panel-body {
@@ -59,7 +62,7 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--espaciado-md);
-  padding-top: var(--espaciado-sm);
+  padding-top: calc(var(--espaciado-md) + env(safe-area-inset-bottom));
 }
 
 .panel-footer-botones .btn-filled-md {
@@ -172,6 +175,22 @@
   min-width: 100%;
   width: 100%;
   max-width: none;
+}
+
+.usuarios-content .tabla-header-filtros {
+  width: 100%;
+}
+
+.usuarios-content .filtro-select-wrapper {
+  width: 100%;
+}
+
+.usuarios-content .filtro-select-trigger {
+  min-width: 0;
+}
+
+.usuarios-content .filtro-dropdown {
+  max-width: calc(100vw - 24px);
 }
 
 /* ==========================================
@@ -358,10 +377,11 @@
 }
 
 #modalEliminarUsuario .md-modal {
-  width: auto;
-  min-width: 380px;
-  max-height: none;
-  overflow: visible;
+  width: min(440px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ==========================================
@@ -383,4 +403,317 @@
 
 @keyframes girar {
   to { transform: rotate(360deg); }
+}
+
+/* ==========================================
+   RESPONSIVE — USUARIOS
+   ========================================== */
+@media (max-width: 1120px) {
+  .usuarios-layout {
+    flex-direction: column;
+  }
+
+  .usuarios-panel {
+    display: none;
+    width: 100%;
+  }
+
+  .usuarios-panel.abierto {
+    display: block;
+    width: 100%;
+    padding-left: 0;
+    margin-top: var(--espaciado-lg);
+    opacity: 1;
+    overflow: visible;
+    max-height: none;
+  }
+
+  .panel-card {
+    width: 100%;
+  }
+
+  .panel-body {
+    align-items: stretch;
+  }
+
+  #formCrearUsuario {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .usuarios-content .tabla-header-filtros {
+    align-items: stretch;
+  }
+
+  .usuarios-content .filtro-search,
+  .usuarios-content .filtro-group,
+  .usuarios-content .tabla-header-filtros .btn-filled-md {
+    flex: 1 1 220px;
+    max-width: none;
+  }
+
+  .usuarios-content .tabla-header-filtros .btn-filled-md {
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body.usuarios-sheet-activo {
+    overflow: hidden;
+  }
+
+  body.usuarios-sheet-activo::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 998;
+  }
+
+  .usuarios-panel {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    padding-left: 0;
+    max-height: calc(100vh - 72px);
+    transform: translateY(100%);
+    opacity: 1;
+    visibility: hidden;
+    pointer-events: none;
+    box-sizing: border-box;
+    transition: transform var(--transicion-normal), visibility 0s linear var(--transicion-normal);
+    z-index: 999;
+  }
+
+  .usuarios-panel.abierto {
+    width: 100%;
+    margin-top: 0;
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+    overflow: visible;
+    max-height: calc(100vh - 72px);
+    transition: transform var(--transicion-normal), visibility 0s;
+  }
+
+  .usuarios-panel .panel-card {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 22px 22px 0 0;
+    box-sizing: border-box;
+    overflow-x: visible;
+    overflow-y: visible;
+    box-shadow: var(--sombra-xl);
+  }
+
+  .usuarios-panel .panel-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    box-sizing: border-box;
+    overflow-x: visible;
+    overflow-y: auto;
+    align-items: stretch;
+    padding-top: 24px;
+    padding-bottom: 18px;
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  #formCrearUsuario {
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: visible;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .usuarios-panel .input-wrapper,
+  .usuarios-panel .input-wrapper input,
+  .usuarios-panel .input-wrapper select,
+  .usuarios-panel .file-contenedor,
+  .usuarios-panel .file-area {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .usuarios-panel .input-wrapper,
+  .usuarios-panel .file-area {
+    width: 100%;
+  }
+
+  .usuarios-panel .panel-footer {
+    flex-shrink: 0;
+  }
+
+  .usuarios-panel .panel-footer-interior {
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-bottom: calc(var(--espaciado-md) + env(safe-area-inset-bottom));
+  }
+
+  .usuarios-panel .input-grupo {
+    margin-bottom: 12px;
+  }
+
+  .usuarios-panel .input-grupo label {
+    font-size: 0.8125rem;
+    line-height: 1.15;
+    margin-bottom: 4px;
+  }
+
+  .usuarios-panel .input-wrapper input,
+  .usuarios-panel .input-wrapper select,
+  .usuarios-panel .filtro-select-trigger {
+    font-size: 0.9375rem;
+    line-height: 1.2;
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .usuarios-panel .input-wrapper input,
+  .usuarios-panel .input-wrapper select {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .usuarios-panel .filtro-select-trigger {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .usuarios-panel .filtro-select-text,
+  .usuarios-panel .file-placeholder,
+  .usuarios-panel .toggle-label,
+  .usuarios-panel .file-nombre,
+  .usuarios-panel .input-error {
+    line-height: 1.15;
+  }
+
+  .usuarios-panel .file-placeholder,
+  .usuarios-panel .toggle-label {
+    font-size: 0.8125rem;
+  }
+
+  .usuarios-panel .file-area {
+    gap: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .usuarios-panel .toggle-contenedor {
+    gap: 10px;
+    padding-top: 4px;
+  }
+
+  .usuarios-panel .panel-footer-botones {
+    padding-top: calc(var(--espaciado-md) + env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+
+  .usuarios-panel .btn-text-md,
+  .usuarios-panel .btn-filled-md {
+    font-size: 0.875rem;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+
+  .usuarios-panel .btn-filled-md {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .file-area {
+    flex-wrap: wrap;
+  }
+
+  .panel-footer-botones {
+    flex-wrap: wrap;
+  }
+
+  .panel-footer-botones .btn-filled-md {
+    margin-right: 0;
+  }
+
+  .usuarios-content .tabla-footer {
+    flex-wrap: wrap;
+    gap: var(--espaciado-sm);
+    padding: var(--espaciado-sm) var(--espaciado-md);
+  }
+
+  .usuarios-content .paginacion-izquierda,
+  .usuarios-content .paginacion-centro,
+  .usuarios-content .paginacion-derecha {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .usuarios-content .paginacion-controles {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .usuarios-content .paginacion-info {
+    white-space: normal;
+    text-align: center;
+  }
+
+  #modalEliminarUsuario .md-modal {
+    width: calc(100vw - 24px);
+  }
+
+  #modalEliminarUsuario .header-text-md p {
+    white-space: normal;
+  }
+
+  #modalEliminarUsuario .modal-header-md,
+  #modalEliminarUsuario .modal-footer-md {
+    padding-left: var(--espaciado-md);
+    padding-right: var(--espaciado-md);
+  }
+
+  #modalEliminarUsuario .modal-footer-md {
+    flex-wrap: wrap;
+  }
+
+  #modalEliminarUsuario .btn-text-md,
+  #modalEliminarUsuario .btn-filled-md {
+    flex: 1 1 140px;
+  }
+}
+
+@media (max-width: 560px) {
+  .usuarios-content .filtro-search,
+  .usuarios-content .filtro-group,
+  .usuarios-content .tabla-header-filtros .btn-filled-md {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .usuarios-content .tabla-header-filtros .btn-filled-md {
+    margin-left: 0 !important;
+  }
+
+  .usuarios-content .tabla-header-filtros .filtro-search {
+    max-width: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .usuarios-panel .panel-body {
+    padding-left: clamp(20px, 6vw, 28px);
+    padding-right: clamp(20px, 6vw, 28px);
+  }
 }

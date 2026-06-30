@@ -20,6 +20,7 @@ document.addEventListener('lateral:listo', async () => {
   let valorFiltroRol = '';
   let rolSeleccionado = '';
   let editandoId = null;
+  const CLASE_SHEET_USUARIOS = 'usuarios-sheet-activo';
 
   const headerHTML = `
     <div class="tabla-header-filtros">
@@ -265,11 +266,13 @@ document.addEventListener('lateral:listo', async () => {
     document.getElementById('campoPassword').closest('.input-grupo').style.display = '';
     textoGuardar.textContent = 'Guardar';
     panel.classList.add('abierto');
+    document.body.classList.add(CLASE_SHEET_USUARIOS);
     setTimeout(() => document.getElementById('campoNombre').focus(), 200);
   }
 
   function cerrarPanel() {
     panel.classList.remove('abierto');
+    document.body.classList.remove(CLASE_SHEET_USUARIOS);
     editandoId = null;
     document.getElementById('grupoGmail').style.display = '';
     document.getElementById('campoPassword').closest('.input-grupo').style.display = '';
@@ -322,6 +325,7 @@ document.addEventListener('lateral:listo', async () => {
 
     limpiarErrores();
     panel.classList.add('abierto');
+    document.body.classList.add(CLASE_SHEET_USUARIOS);
     setTimeout(() => document.getElementById('campoNombre').focus(), 200);
   }
 
