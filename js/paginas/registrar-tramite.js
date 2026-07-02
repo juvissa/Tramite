@@ -655,10 +655,10 @@
         .from('documentos')
         .getPublicUrl(nombreWord)
 
-      // ─── 6. Mover archivos de temp/ a emitidos/{nombre_usuario}/{numero_doc}/ ───
+      // ─── 6. Mover archivos de temp/ a emitidos/{nombre_usuario}/adjuntos/{numero_doc}_{nombre} ───
       for (const archivo of archivosSubidos) {
         const nombre = archivo.ruta.split('/').pop()
-        const destinoRuta = `emitidos/${nombreCarpeta}/${data.numero_documento}/${nombre}`
+        const destinoRuta = `emitidos/${nombreCarpeta}/adjuntos/${data.numero_documento}_${nombre}`
 
         const { error: copyError } = await supabase.storage
           .from('documentos')
@@ -771,6 +771,41 @@
   function sanitizarNombre(nombre) {
     const sinAcentos = nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     return sinAcentos.replace(/[^a-zA-Z0-9._-]/g, '_')
+  }
+
+  /* ─── HELPER: subir Word a Storage y registrar en documentos_archivos ─── */
+  async function subirWordYRegistrar({ blob, docId, nombreArchivo, rutaStorage }) {
+    const { error: uploadError } = await supabase.storage
+      .from('documentos')
+      .upload(rutaStorage, blob, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      })
+
+    if (uploadError) {
+      throw new Error('Error al subir el Word: ' + uploadError.message)
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('documentos')
+      .getPublicUrl(rutaStorage)
+
+    const { error: dbError } = await supabase.from('documentos_archivos').insert({
+      documento_id: docId,
+      nombre_archivo: nombreArchivo,
+      ruta_archivo: rutaStorage,
+      url_archivo: publicUrl,
+      tipo_archivo: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      tamano_bytes: blob.size || 0,
+      subido_por: perfilActual.id,
+    })
+
+    if (dbError) {
+      console.warn('Error al registrar Word en BD:', dbError)
+    }
+
+    return { ruta: rutaStorage, url: publicUrl }
   }
 
   /* ════════════════════════════════════════════
@@ -1032,8 +1067,11 @@
     spinner.style.display = 'inline-block'
     texto.textContent = 'Guardando...'
 
+    let docId = null
+
     try {
-      const { error } = await supabase
+      // ─── 1. Insertar documento derivado ───
+      const { data: docData, error } = await supabase
         .from('documentos')
         .insert({
           tipo: 'derivado',
@@ -1054,12 +1092,41 @@
           observaciones_derivacion: observaciones || null,
           creado_por: perfilActual.id,
         })
+        .select('id')
+        .single()
 
       if (error) {
         console.error('[derivar] Error:', error)
         throw new Error(error.message || 'Error al guardar la derivación')
       }
 
+      docId = docData.id
+
+      // ─── 2. Generar Word en memoria ───
+      const tipoObj = TIPOS_DOCUMENTO.find(t => t.id === tipoDocumento)
+      const wordBlob = await generarWordBlob({
+        tipo_documento: tipoObj ? tipoObj.nombre : tipoDocumento,
+        numero_documento: numeroDocumento,
+        fecha,
+        destinatario: responsable || '',
+        cargo: cargo || '',
+        asunto,
+        cuerpo: observaciones || asunto,
+        firma_url: null,
+      })
+
+      // ─── 3. Subir Word a Storage y registrar en documentos_archivos ───
+      const rutaWord = `derivados/${nombreCarpeta}/DERIVADO_${tipoDocumento}_${numeroDocumento}.docx`
+      const nombreArchivo = `DERIVADO_${tipoDocumento}_${numeroDocumento}.docx`
+
+      await subirWordYRegistrar({
+        blob: wordBlob,
+        docId: docId,
+        nombreArchivo,
+        rutaStorage: rutaWord,
+      })
+
+      // ─── Éxito ───
       texto.textContent = '¡Guardado!'
       spinner.style.display = 'none'
 
@@ -1070,6 +1137,10 @@
       }, 1500)
 
     } catch (err) {
+      if (docId) {
+        await supabase.from('documentos').delete().eq('id', docId)
+      }
+
       btn.disabled = false
       spinner.style.display = 'none'
       texto.textContent = 'Guardar Derivación'
