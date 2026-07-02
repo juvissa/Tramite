@@ -41,12 +41,14 @@
   }
 
   const TIPOS_DOCUMENTO = [
-    { id: 'CARTA', nombre: 'Carta Nº' },
-    { id: 'MEMORANDUM', nombre: 'Memorándum Nº' },
-    { id: 'OFICIO', nombre: 'Oficio Nº' },
-    { id: 'SOLICITUD', nombre: 'Solicitud Nº' },
-    { id: 'INFORME', nombre: 'Informe Nº' },
-    { id: 'NOTAS', nombre: 'Notas Nº' },
+    { id: 'CARTA', nombre: 'CARTA N°' },
+    { id: 'MEMORANDUM', nombre: 'MEMORÁNDUM N°' },
+    { id: 'MEMORANDO_CIRCULAR', nombre: 'MEMORANDO CIRCULAR N°' },
+    { id: 'OFICIO', nombre: 'OFICIO N°' },
+    { id: 'SOLICITUD', nombre: 'SOLICITUD N°' },
+    { id: 'INFORME', nombre: 'INFORME N°' },
+    { id: 'NOTAS', nombre: 'NOTA N°' },
+    { id: 'NOTA_CIRCULAR', nombre: 'NOTA CIRCULAR N°' },
   ]
 
   const MESES = [
@@ -131,7 +133,7 @@
 
   function obtenerNombreTipo(id) {
     const t = TIPOS_DOCUMENTO.find(t => t.id === id)
-    return t ? t.nombre.replace(' Nº', '') : (id || '—')
+    return t ? t.nombre.replace(/\sN[°º]$/, '') : (id || '—')
   }
 
   /* ════════════════════════════════════════════

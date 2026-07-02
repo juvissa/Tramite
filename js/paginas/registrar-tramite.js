@@ -14,12 +14,14 @@
   const cacheNumeros = {}
 
   const TIPOS_DOCUMENTO = [
-    { id: 'CARTA', nombre: 'Carta N°' },
-    { id: 'MEMORANDUM', nombre: 'Memorándum N°' },
-    { id: 'OFICIO', nombre: 'Oficio N°' },
-    { id: 'SOLICITUD', nombre: 'Solicitud N°' },
-    { id: 'INFORME', nombre: 'Informe N°' },
-    { id: 'NOTAS', nombre: 'Nota N°' },
+    { id: 'CARTA', nombre: 'CARTA N°' },
+    { id: 'MEMORANDUM', nombre: 'MEMORÁNDUM N°' },
+    { id: 'MEMORANDO_CIRCULAR', nombre: 'MEMORANDO CIRCULAR N°' },
+    { id: 'OFICIO', nombre: 'OFICIO N°' },
+    { id: 'SOLICITUD', nombre: 'SOLICITUD N°' },
+    { id: 'INFORME', nombre: 'INFORME N°' },
+    { id: 'NOTAS', nombre: 'NOTA N°' },
+    { id: 'NOTA_CIRCULAR', nombre: 'NOTA CIRCULAR N°' },
   ]
 
   document.addEventListener('DOMContentLoaded', inicializar)

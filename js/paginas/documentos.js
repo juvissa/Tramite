@@ -21,12 +21,14 @@
   let vistaActual = 'documento'   // 'documento' | 'adjunto' — controla qué vista está activa
 
   const TIPOS_DOCUMENTO = [
-    { id: 'CARTA', nombre: 'Carta Nº' },
-    { id: 'MEMORANDUM', nombre: 'Memorándum Nº' },
-    { id: 'OFICIO', nombre: 'Oficio Nº' },
-    { id: 'SOLICITUD', nombre: 'Solicitud Nº' },
-    { id: 'INFORME', nombre: 'Informe Nº' },
-    { id: 'NOTAS', nombre: 'Notas Nº' },
+    { id: 'CARTA', nombre: 'CARTA N°' },
+    { id: 'MEMORANDUM', nombre: 'MEMORÁNDUM N°' },
+    { id: 'MEMORANDO_CIRCULAR', nombre: 'MEMORANDO CIRCULAR N°' },
+    { id: 'OFICIO', nombre: 'OFICIO N°' },
+    { id: 'SOLICITUD', nombre: 'SOLICITUD N°' },
+    { id: 'INFORME', nombre: 'INFORME N°' },
+    { id: 'NOTAS', nombre: 'NOTA N°' },
+    { id: 'NOTA_CIRCULAR', nombre: 'NOTA CIRCULAR N°' },
   ]
 
   document.addEventListener('lateral:listo', inicializar)

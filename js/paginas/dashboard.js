@@ -16,12 +16,14 @@
     'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
   const TIPOS = {
-    'CARTA': 'Carta',
-    'MEMORANDUM': 'Memorándum',
-    'OFICIO': 'Oficio',
-    'SOLICITUD': 'Solicitud',
-    'INFORME': 'Informe',
-    'NOTAS': 'Notas',
+    'CARTA': 'CARTA',
+    'MEMORANDUM': 'MEMORÁNDUM',
+    'MEMORANDO_CIRCULAR': 'MEMORANDO CIRCULAR',
+    'OFICIO': 'OFICIO',
+    'SOLICITUD': 'SOLICITUD',
+    'INFORME': 'INFORME',
+    'NOTAS': 'NOTA',
+    'NOTA_CIRCULAR': 'NOTA CIRCULAR',
   }
 
   const MESES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SET', 'OCT', 'NOV', 'DIC']
